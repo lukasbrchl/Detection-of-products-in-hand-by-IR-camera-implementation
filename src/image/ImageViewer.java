@@ -13,7 +13,7 @@ public class ImageViewer {
 	private ImageIcon icon;
 	
 	public ImageViewer() {
-		init();
+//		init();
 	}
 	
 	private void init () {	
@@ -28,6 +28,7 @@ public class ImageViewer {
 	}
 	
 	public void loadImage(BufferedImage bufferedImage) {
+		if (frame == null) init();
 		icon = new ImageIcon(bufferedImage);			
 		lbl.setIcon(icon);
 	}
