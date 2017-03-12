@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -108,12 +109,13 @@ public class DataReciever {
 		return file;
 	}
 	
-	public byte [] getImageFromFakeStream() throws InterruptedException {		
+	public byte [] getImageFromFakeStream() throws InterruptedException, ClosedByInterruptException {		
 		if (fakeStreamCounter >= filesInFolder.size()) fakeStreamCounter = 0;		
 		byte[] data = null;
 		try {
 			data = Files.readAllBytes(filesInFolder.get(fakeStreamCounter++));
-		} catch (IOException e) {
+		} catch (Exception e) {
+			if (e instanceof ClosedByInterruptException) throw new ClosedByInterruptException();
 			e.printStackTrace();
 		}
 		Thread.sleep(100);				

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import java.lang.*?>
@@ -10,7 +11,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 
-<BorderPane prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
+<BorderPane prefHeight="639.0" prefWidth="874.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
    <center>
       <ImageView fx:id="imageView" fitHeight="512.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
    </center>
@@ -22,4 +23,46 @@
          </children>
       </HBox>
    </bottom>
+   <left>
+      <VBox alignment="CENTER_LEFT" prefHeight="582.0" prefWidth="223.0" BorderPane.alignment="CENTER">
+         <children>
+            <VBox alignment="CENTER" prefHeight="96.0" prefWidth="209.0">
+               <children>
+                  <AnchorPane fx:id="minAnchorPane" disable="true" prefHeight="22.0" prefWidth="195.0">
+                     <children>
+                        <Slider fx:id="minTempSlider" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="2.5" />
+                        <Label text="Min" AnchorPane.leftAnchor="7.0" />
+                        <Label fx:id="minTempLabel" text="0" AnchorPane.rightAnchor="7.0" />
+                     </children>
+                  </AnchorPane>
+                  <AnchorPane fx:id="maxAnchorPane" disable="true" prefHeight="22.0" prefWidth="195.0">
+                     <children>
+                        <Slider fx:id="maxTempSlider" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="2.5" />
+                        <Label text="Max" AnchorPane.leftAnchor="7.0" />
+                        <Label fx:id="maxTempLabel" text="0" AnchorPane.rightAnchor="7.0" />
+                     </children>
+                  </AnchorPane>
+                  <CheckBox fx:id="scaleTempCheckbox" mnemonicParsing="false" onAction="#scaleTempCheckboxClicked" text="Scale temperatures" />
+               </children>
+               <padding>
+                  <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+               </padding>
+            </VBox>
+            <VBox alignment="BOTTOM_LEFT" prefHeight="218.0" prefWidth="86.0">
+               <children>
+                  <Label fx:id="streamStatus" text="Status: " />
+               </children>
+               <padding>
+                  <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+               </padding>
+            </VBox>
+         </children>
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets>
+         <padding>
+            <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+         </padding>
+      </VBox>
+   </left>
 </BorderPane>

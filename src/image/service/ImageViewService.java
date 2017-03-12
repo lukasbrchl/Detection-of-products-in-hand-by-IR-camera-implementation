@@ -1,5 +1,8 @@
 package image.service;
 
+import java.nio.channels.ClosedByInterruptException;
+
+import application.MainController;
 import image.ImageConvertor;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -11,10 +14,12 @@ import utils.Utils;
 
 public class ImageViewService extends Service<Image> {
 	
+	private final MainController mainController;
 	private final int width;
 	private final int height;
 
-	public ImageViewService(int width, int height) {
+	public ImageViewService(MainController mainController, int width, int height) {
+		this.mainController = mainController;
 		this.width = width;
 		this.height = height;
 	}
@@ -31,13 +36,19 @@ public class ImageViewService extends Service<Image> {
 				dr.initSocket();
 				try {
 					byteArray = dr.getImageFromFakeStream();
-					while (byteArray != null && byteArray.length != 0) { // && !isCancelled()
-						convertedImage = imageConvertor.convertBinaryToImage(byteArray);	
+					while (byteArray != null && byteArray.length != 0) {
+						if (mainController.getScaleTempCheckbox().isSelected()) {							
+							convertedImage = imageConvertor.convertBinaryToImage(byteArray, (float) mainController.getMinTempSlider().getValue(), (float) mainController.getMaxTempSlider().getValue());	
+						} else
+							convertedImage = imageConvertor.convertBinaryToImage(byteArray);	
 						updateValue(convertedImage);
+						updateMessage("Reciving");
 						byteArray = dr.getImageFromFakeStream();						
 					}	
-				} catch (InterruptedException ex) { //catch Thread.sleep()
+					
+				} catch (InterruptedException | ClosedByInterruptException ex ) { //catch Thread.sleep()
 				}
+				updateMessage("Done");
 				return null;
 			}
 		};
