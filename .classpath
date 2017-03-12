@@ -9,6 +9,5 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="C:/Users/Lukáš/Dropbox/ThesisProject/lib/commons-lang3-3.5/commons-lang3-3.5.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Lukáš/Dropbox/ThesisProject/lib/Imshow.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

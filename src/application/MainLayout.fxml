@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<BorderPane prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
+   <center>
+      <ImageView fx:id="imageView" fitHeight="512.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
+   </center>
+   <bottom>
+      <HBox alignment="CENTER" prefHeight="57.0" prefWidth="800.0" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="openStreamButton" mnemonicParsing="false" onAction="#openStream" text="Open stream" />
+            <Button fx:id="closeStreamButton" mnemonicParsing="false" onAction="#closeStream" text="Close stream" />
+         </children>
+      </HBox>
+   </bottom>
+</BorderPane>

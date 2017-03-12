@@ -1,4 +1,7 @@
 .project
 .settings
+.classpath
 bin
 img
+*.tiff
+*.bin
