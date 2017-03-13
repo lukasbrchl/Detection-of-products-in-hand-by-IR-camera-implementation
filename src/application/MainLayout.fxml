@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import java.lang.*?>
-<?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Spinner?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="1080.0" prefWidth="1240.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
+<BorderPane prefHeight="1080.0" prefWidth="1240.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
    <center>
       <ImageView fx:id="imageView" fitHeight="512.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
    </center>
@@ -64,7 +67,7 @@
                         <AnchorPane fx:id="maxTempPane" disable="true" prefHeight="22.0" prefWidth="195.0">
                            <children>
                               <Slider fx:id="maxTempSlider" layoutY="3.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
-                              <Spinner fx:id="maxTempSpinner" amountToStepBy="1" editable="true" initialValue="36" max="100.0" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />                              
+                              <Spinner fx:id="maxTempSpinner" amountToStepBy="1" editable="true" initialValue="36.0" max="100.0" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />                              
                            </children>
                         </AnchorPane>
                      </children>
@@ -117,6 +120,38 @@
                         <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
                      </padding>
                   </VBox>
+                  <Separator prefWidth="200.0">
+                     <padding>
+                        <Insets top="10.0" />
+                     </padding>
+                  </Separator>
+                  <VBox prefHeight="40.0" prefWidth="238.0">
+                     <children>
+                        <Label text="Blur" />
+                        <AnchorPane fx:id="blurPane" disable="true" prefHeight="22.0" prefWidth="195.0">
+                           <children>
+                              <Slider fx:id="blurSlider" layoutY="3.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
+                              <Spinner fx:id="blurSpinner" amountToStepBy="1" editable="true" initialValue="0" max="100" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
+                           </children>
+                        </AnchorPane>
+                     </children>
+                     <padding>
+                        <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+                     </padding>
+                  </VBox>
+                  <HBox prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <CheckBox fx:id="blurCheckbox" mnemonicParsing="false" onAction="#blurCheckboxClicked" text="Blur" />
+                        <ChoiceBox fx:id="blurChoiceBox" maxHeight="23.0" minHeight="23.0" prefHeight="23.0" prefWidth="153.0">
+                           <opaqueInsets>
+                              <Insets />
+                           </opaqueInsets>
+                           <HBox.margin>
+                              <Insets left="30.0" />
+                           </HBox.margin>
+                        </ChoiceBox>
+                     </children>
+                  </HBox>
                   <Separator prefWidth="200.0">
                      <padding>
                         <Insets top="10.0" />

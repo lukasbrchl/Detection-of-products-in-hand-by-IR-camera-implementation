@@ -19,6 +19,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -51,6 +52,12 @@ public class MainController {
 	//Brightness and contrast
 	@FXML private Slider brightnessSlider, contrastSlider;	
 	@FXML private Spinner<Double> brightnessSpinner, contrastSpinner;
+	//Blur
+	@FXML private Slider blurSlider;
+	@FXML private Spinner<Double> blurSpinner;
+	@FXML private CheckBox blurCheckbox;
+	@FXML private ChoiceBox<String> blurChoiceBox;
+	@FXML private AnchorPane blurPane;
 	//Binary and otsu threshold
 	@FXML private Slider binaryThresholdSlider, otsuCorrectionSlider;
 	@FXML private Spinner<Double> binaryThresholdSpinner, otsuCorrectionSpinner;
@@ -67,7 +74,7 @@ public class MainController {
 	@FXML private CheckBox dilateCheckbox, erodeCheckbox;
 	@FXML private AnchorPane morphPane;
 
-	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty, binaryThresholdDoubleProperty, otsuCorrectionDoubleProperty, brightnessDoubleProperty , contrastDoubleProperty,
+	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty, brightnessDoubleProperty, contrastDoubleProperty, blurDoubleProperty, binaryThresholdDoubleProperty, otsuCorrectionDoubleProperty, 
 	cannyEdge1DoubleProperty, cannyEdge2DoubleProperty, morphDoubleProperty;  //prevents GC from cleaning weak listeners
 	private ImageViewService imv;
 	private ImageConvertor imgConv;
@@ -86,10 +93,11 @@ public class MainController {
 	 private void bindSpinnersToSliders() {	 
 		 minTempDoubleProperty = DoubleProperty.doubleProperty(minTempSpinner.getValueFactory().valueProperty());
 		 maxTempDoubleProperty = DoubleProperty.doubleProperty(maxTempSpinner.getValueFactory().valueProperty());
-		 binaryThresholdDoubleProperty = DoubleProperty.doubleProperty(binaryThresholdSpinner.getValueFactory().valueProperty());
-		 otsuCorrectionDoubleProperty = DoubleProperty.doubleProperty(otsuCorrectionSpinner.getValueFactory().valueProperty());
 		 brightnessDoubleProperty = DoubleProperty.doubleProperty(brightnessSpinner.getValueFactory().valueProperty());
 		 contrastDoubleProperty = DoubleProperty.doubleProperty(contrastSpinner.getValueFactory().valueProperty());
+		 blurDoubleProperty = DoubleProperty.doubleProperty(blurSpinner.getValueFactory().valueProperty());
+		 binaryThresholdDoubleProperty = DoubleProperty.doubleProperty(binaryThresholdSpinner.getValueFactory().valueProperty());
+		 otsuCorrectionDoubleProperty = DoubleProperty.doubleProperty(otsuCorrectionSpinner.getValueFactory().valueProperty());		
 		 cannyEdge1DoubleProperty = DoubleProperty.doubleProperty(cannyEdge1Spinner.getValueFactory().valueProperty());
 		 cannyEdge2DoubleProperty = DoubleProperty.doubleProperty(cannyEdge2Spinner.getValueFactory().valueProperty());
 		 morphDoubleProperty = DoubleProperty.doubleProperty(morphSpinner.getValueFactory().valueProperty());
@@ -97,10 +105,11 @@ public class MainController {
 
          minTempSlider.valueProperty().bindBidirectional(minTempDoubleProperty);
          maxTempSlider.valueProperty().bindBidirectional(maxTempDoubleProperty);
-         binaryThresholdSlider.valueProperty().bindBidirectional(binaryThresholdDoubleProperty);
-         otsuCorrectionSlider.valueProperty().bindBidirectional(otsuCorrectionDoubleProperty);
          brightnessSlider.valueProperty().bindBidirectional(brightnessDoubleProperty);
          contrastSlider.valueProperty().bindBidirectional(contrastDoubleProperty);
+         blurSlider.valueProperty().bindBidirectional(blurDoubleProperty);
+         binaryThresholdSlider.valueProperty().bindBidirectional(binaryThresholdDoubleProperty);
+         otsuCorrectionSlider.valueProperty().bindBidirectional(otsuCorrectionDoubleProperty);        
          cannyEdge1Slider.valueProperty().bindBidirectional(cannyEdge1DoubleProperty);
          cannyEdge2Slider.valueProperty().bindBidirectional(cannyEdge2DoubleProperty);
          morphSlider.valueProperty().bindBidirectional(morphDoubleProperty);
@@ -140,22 +149,43 @@ public class MainController {
 	}
 	
 	private Mat enchanceMat(Mat mat) {
-		if (brightnessDoubleProperty.getValue() != 0 || contrastDoubleProperty.getValue() != 0) mat.convertTo(mat, -1, brightnessDoubleProperty.getValue() + 1, contrastDoubleProperty.getValue());
-		if (binaryThresholdCheckbox.isSelected()) Imgproc.threshold(mat, mat, binaryThresholdSlider.getValue(), 255, Imgproc.THRESH_BINARY);
-		if (otsuThresholdCheckbox.isSelected())	Imgproc.threshold(mat, mat, Imgproc.threshold(mat, new Mat(), 0, 255, Imgproc.THRESH_OTSU) + otsuCorrectionSlider.getValue(), 255, Imgproc.THRESH_BINARY);
+		if (brightnessDoubleProperty.getValue() != 0 || contrastDoubleProperty.getValue() != 0) doBrightnessContrast(mat);
+		if (blurCheckbox.isSelected()) doBlurImage(mat);
+		if (binaryThresholdCheckbox.isSelected()) doBinaryTreshold(mat);
+		if (otsuThresholdCheckbox.isSelected())	doOtsuTreshold(mat);
 		if (cannyEdgeCheckbox.isSelected()) mat = doCannyEdgeDetection(mat);
 		if (dilateCheckbox.isSelected()) dilate(mat);
 		if (erodeCheckbox.isSelected()) erode(mat);
 		return mat;
 	}
 
-	private Mat doCannyEdgeDetection(Mat frame) {
-		Mat grayImage = frame;
-		Mat detectedEdges = new Mat();			
-		Imgproc.blur(grayImage, detectedEdges, new Size(3, 3));
-		Imgproc.Canny(detectedEdges, detectedEdges, cannyEdge1Slider.getValue(), cannyEdge2Slider.getValue());
+	private Mat doBrightnessContrast(Mat mat) {
+		mat.convertTo(mat, -1, brightnessDoubleProperty.getValue() + 1, contrastDoubleProperty.getValue());
+		return mat;
+	}
+	
+	private Mat doBlurImage(Mat mat) {
+		int size = (int) blurSlider.getValue();
+		if (size % 2 == 0) ++size;
+		Imgproc.GaussianBlur(mat, mat, new Size(size, size), 2);
+		return mat;
+	}
+	
+	private Mat doBinaryTreshold(Mat mat) {
+		Imgproc.threshold(mat, mat, binaryThresholdSlider.getValue(), 255, Imgproc.THRESH_BINARY);
+		return mat;
+	}
+	
+	private Mat doOtsuTreshold(Mat mat) {
+		Imgproc.threshold(mat, mat, Imgproc.threshold(mat, new Mat(), 0, 255, Imgproc.THRESH_OTSU) + otsuCorrectionSlider.getValue(), 255, Imgproc.THRESH_BINARY);
+		return mat;
+	}	
+	
+	private Mat doCannyEdgeDetection(Mat mat) {
+		Mat detectedEdges = new Mat();		
+		Imgproc.Canny(mat, mat, cannyEdge1Slider.getValue(), cannyEdge2Slider.getValue());
 		Mat dest = new Mat();
-		frame.copyTo(dest, detectedEdges);
+		mat.copyTo(dest, detectedEdges);
 		return dest;
 	}
 	
@@ -207,6 +237,14 @@ public class MainController {
 			minTempPane.setDisable(true);
 			maxTempPane.setDisable(true);
 		}		
+	}
+	
+	@FXML 
+	protected void blurCheckboxClicked(ActionEvent event) {
+		if(blurCheckbox.isSelected()) 
+			blurPane.setDisable(false);
+		else
+			blurPane.setDisable(true);
 	}
 	
 	@FXML 
