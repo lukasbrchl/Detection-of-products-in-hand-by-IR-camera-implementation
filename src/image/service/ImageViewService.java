@@ -2,6 +2,8 @@ package image.service;
 
 import java.nio.channels.ClosedByInterruptException;
 
+import org.opencv.core.Mat;
+
 import application.MainController;
 import image.ImageConvertor;
 import javafx.beans.property.IntegerProperty;
@@ -12,43 +14,50 @@ import javafx.scene.image.Image;
 import network.DataReciever;
 import utils.Utils;
 
-public class ImageViewService extends Service<Image> {
+public class ImageViewService extends Service<Mat> {
 	
 	private final MainController mainController;
 	private final int width;
 	private final int height;
+	private final ImageConvertor imageConvertor;
+	private final DataReciever dataReciever;
 
-	public ImageViewService(MainController mainController, int width, int height) {
+	public ImageViewService(MainController mainController, ImageConvertor imageConvertor, DataReciever dataReciever, int width, int height) {
 		this.mainController = mainController;
+		this.imageConvertor = imageConvertor;
+		this.dataReciever = dataReciever;
 		this.width = width;
 		this.height = height;
 	}
 	
+	
+	
 	@Override
-	protected Task<Image> createTask() {
-		return new Task<Image>() {
-			@Override protected Image call() {				
-				ImageConvertor imageConvertor = new ImageConvertor(width, height);
-				DataReciever dr = new DataReciever("fake", 0, 0);
-				Image convertedImage = null;
+	protected Task<Mat> createTask() {
+		return new Task<Mat>() {
+			@Override protected Mat call() {				
+				Mat convertedMat = null;
 				byte[] byteArray;
 				
-				dr.initSocket();
+				dataReciever.initSocket();
 				try {
-					byteArray = dr.getImageFromFakeStream();
+					byteArray = dataReciever.getImageFromStream();
 					while (byteArray != null && byteArray.length != 0) {
 						if (mainController.getScaleTempCheckbox().isSelected()) {							
-							convertedImage = imageConvertor.convertBinaryToImage(byteArray, (float) mainController.getMinTempSlider().getValue(), (float) mainController.getMaxTempSlider().getValue());	
+							convertedMat = imageConvertor.convertBinaryToMat(byteArray, (float) mainController.getMinTempSlider().getValue(), (float) mainController.getMaxTempSlider().getValue());	
 						} else
-							convertedImage = imageConvertor.convertBinaryToImage(byteArray);	
-						updateValue(convertedImage);
-						updateMessage("Reciving");
-						byteArray = dr.getImageFromFakeStream();						
+							convertedMat = imageConvertor.convertBinaryToMat(byteArray);	
+						updateValue(convertedMat);
+						if (dataReciever.isPaused()) 
+							updateMessage("Paused");
+						else
+							updateMessage("Streaming");
+						byteArray = dataReciever.getImageFromStream();						
 					}	
 					
 				} catch (InterruptedException | ClosedByInterruptException ex ) { //catch Thread.sleep()
 				}
-				updateMessage("Done");
+				updateMessage("Stream closed");
 				return null;
 			}
 		};

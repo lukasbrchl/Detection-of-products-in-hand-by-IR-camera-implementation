@@ -22,6 +22,7 @@ import image.ImageViewer;
 import network.domain.ImageData;
 
 public class DataReciever {
+	public static final String DUMMY_HOST = "dummy";
 	public static final String DEFAULT_HOST_NAME = "localhost";
 	public static final int DEFAULT_PORT_NUMBER = 27015;
 	
@@ -33,6 +34,8 @@ public class DataReciever {
 	private final int port;
 	private List<Path> filesInFolder;
 	private int fakeStreamCounter;
+	private byte[] latestBuffer;
+	private boolean paused;
 	
 	public DataReciever (String hostName, int port, int bytesToRecieve) {
 		this.bytesToRecieve = bytesToRecieve;
@@ -42,7 +45,7 @@ public class DataReciever {
 	
 	public void initSocket() {
 		try {
-			if (hostName.equals("fake")) { //debugging purpose
+			if (hostName.equals(DUMMY_HOST)) { //debugging purpose
 				filesInFolder = Files.walk(Paths.get("img/binary")).filter(Files::isRegularFile).collect(Collectors.toList());
 				fakeStreamCounter = 0;
 				return;
@@ -92,7 +95,16 @@ public class DataReciever {
 //		return result;
 //	}
 	
-	public byte [] getImageFromStream() {
+	public byte[] getImageFromStream() throws ClosedByInterruptException, InterruptedException {
+		if (paused) return latestBuffer;
+		if (hostName.equals(DUMMY_HOST)) 
+			latestBuffer = getImageFromDummyStream();
+		else
+			latestBuffer = getImageFromSocketStream();			
+		return latestBuffer;
+	}
+	
+	private byte[] getImageFromSocketStream() {
 		byte [] file = new byte [bytesToRecieve];	
 		byte [] buffer = new byte[BUFFER_SIZE]; 
 		int readCount, bytesWritten = 0;
@@ -109,7 +121,7 @@ public class DataReciever {
 		return file;
 	}
 	
-	public byte [] getImageFromFakeStream() throws InterruptedException, ClosedByInterruptException {		
+	private byte[] getImageFromDummyStream() throws InterruptedException, ClosedByInterruptException {		
 		if (fakeStreamCounter >= filesInFolder.size()) fakeStreamCounter = 0;		
 		byte[] data = null;
 		try {
@@ -121,4 +133,14 @@ public class DataReciever {
 		Thread.sleep(100);				
 		return data;
 	}
+
+	public final boolean isPaused() {
+		return paused;
+	}
+
+	public final void setPaused(boolean paused) {
+		this.paused = paused;
+	}
+	
+	
 }

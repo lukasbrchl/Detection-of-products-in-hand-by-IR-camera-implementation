@@ -80,7 +80,7 @@ public class ImageConvertor {
 		
 	public Mat convertBinaryToMat(byte[] byteArray) {
 		byte [] pixels = ((DataBufferByte) convertBinaryToBufferedImage(byteArray).getRaster().getDataBuffer()).getData(); //TODO: lot ineffective			
-		Mat mat = new Mat(imageWidth, imageHeight, CvType.CV_8U);
+		Mat mat = new Mat(imageHeight, imageWidth, CvType.CV_8U);
 		mat.put(0, 0, pixels);
 		return mat;
 	}

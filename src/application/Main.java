@@ -20,7 +20,7 @@ public class Main extends Application{
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("MainLayout.fxml"));
 //			Parent root = (Parent) loader.load();
 			BorderPane root = (BorderPane) loader.load();
-			Scene scene = new Scene(root, 1024, 800);
+			Scene scene = new Scene(root, 1240, 1080);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setTitle("ThesisProject");
 			primaryStage.setScene(scene);
