@@ -1,7 +1,7 @@
 package network;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
@@ -10,57 +10,67 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedList;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import javax.imageio.ImageIO;
-
-import image.ImageConvertor;
-import image.ImageViewer;
-import network.domain.ImageData;
+import utils.Config;
 
 public class DataReciever {
+	public enum Status {
+		CONNECTED("Connected"),
+		STREAMING("Streaming"),
+		PAUSED("Paused"),
+		CLOSED("Closed");
+		private final String strStatus;
+		private Status (String strStatus) {
+			this.strStatus = strStatus;
+		}
+		public String getStrStatus() {
+			return strStatus;
+		}
+	}
 	public static final String DUMMY_HOST = "dummy";
-	public static final String DEFAULT_HOST_NAME = "localhost";
-	public static final int DEFAULT_PORT_NUMBER = 27015;
 	
 	private final int BUFFER_SIZE = 8192; // or 4096, or more
 	private Socket socket; 
 	private InputStream inputStream;
 	private final int bytesToRecieve; //shouldn't change while recieving
-	private final String hostName;
+	private String hostName;
 	private final int port;
 	private List<Path> filesInFolder;
 	private int fakeStreamCounter;
 	private byte[] latestBuffer;
-	private boolean paused;
+	private Status status;
+	private boolean saveImages;
 	
 	public DataReciever (String hostName, int port, int bytesToRecieve) {
 		this.bytesToRecieve = bytesToRecieve;
 		this.hostName = hostName;
 		this.port = port;
+		this.status = Status.CLOSED;
 	}
 	
-	public void initSocket() {
+	public void openConnection() {
 		try {
 			if (hostName.equals(DUMMY_HOST)) { //debugging purpose
-				filesInFolder = Files.walk(Paths.get("img/binary")).filter(Files::isRegularFile).collect(Collectors.toList());
-				fakeStreamCounter = 0;
+				initDummyHost();
 				return;
 			}
 			socket = new Socket(hostName, port);
 			inputStream =  socket.getInputStream();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+			status = Status.CONNECTED;
+			
+		} catch (Exception e) {
+			initDummyHost();
 		}	
 	}
 	
 	//do cleanup
-	public void finish() {
+	public void closeConnection() {
+		status = Status.CLOSED;
+		if (hostName.equals(DUMMY_HOST)) return;
 		try {
 			if (!socket.isClosed())
 				socket.close();
@@ -70,37 +80,15 @@ public class DataReciever {
 			e.printStackTrace();
 		}
 	}
-	
-//	public List <ImageData> recieveData(boolean showImage, boolean saveImage) {
-//		List <ImageData> result = new LinkedList<>();
-//		ImageViewer imageViewer = new ImageViewer();
-//		BufferedImage bufferedImage = null;
-//		int imgCounter = 0;
-//		
-//		byte [] binaryImage = getImageFromStream();
-//		
-//		ImageConvertor imageCovnertor = new ImageConvertor(640, 512); //ImageData.getWidth...
-//		
-//		while (binaryImage != null && binaryImage.length != 0) {
-//			if (showImage || saveImage) bufferedImage = imageCovnertor.convertBinaryToBufferedImage(binaryImage);
-//			if (showImage) imageViewer.loadImage(bufferedImage);				
-//			if (saveImage) try {
-//				ImageIO.write(bufferedImage, "TIFF", new File(FILE_PREFIX + imgCounter++ + TIFF_POSTFIX));
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}		
-//			result.add(new ImageData(binaryImage));
-//			binaryImage = getImageFromStream();
-//		}
-//		return result;
-//	}
-	
+		
 	public byte[] getImageFromStream() throws ClosedByInterruptException, InterruptedException {
-		if (paused) return latestBuffer;
+		if (status.equals(Status.PAUSED)) return latestBuffer;
 		if (hostName.equals(DUMMY_HOST)) 
 			latestBuffer = getImageFromDummyStream();
-		else
-			latestBuffer = getImageFromSocketStream();			
+		else {
+			latestBuffer = getImageFromSocketStream();	
+			if (saveImages) saveBinaryData();
+		}
 		return latestBuffer;
 	}
 	
@@ -130,17 +118,48 @@ public class DataReciever {
 			if (e instanceof ClosedByInterruptException) throw new ClosedByInterruptException();
 			e.printStackTrace();
 		}
-		Thread.sleep(100);				
+		Thread.sleep(Integer.parseInt(Config.getInstance().getValue(Config.DUMMY_SLEEP)));				
 		return data;
 	}
-
-	public final boolean isPaused() {
-		return paused;
+	
+	private void saveBinaryData() {
+		try {
+			String filename = new SimpleDateFormat("MM_dd_HH_mm_ss_SSS").format(new Date());
+			DataOutputStream os = new DataOutputStream(new FileOutputStream(Config.getInstance().getValue(Config.IMAGE_SAVE)+ filename + ".bin"));		 
+			os.write(latestBuffer, 0, bytesToRecieve);
+			os.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}		 
 	}
 
-	public final void setPaused(boolean paused) {
-		this.paused = paused;
+	private void initDummyHost() {
+		try {
+			hostName = DUMMY_HOST;
+			filesInFolder = Files.walk(Paths.get(Config.getInstance().getValue(Config.DUMMY_PATH).toString())).filter(Files::isRegularFile).collect(Collectors.toList());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		fakeStreamCounter = 0;
+		setStatus(Status.CONNECTED);
 	}
+
+	public Status getStatus() {
+		return status;
+	}
+
+	public void setStatus(Status status) {
+		this.status = status;
+	}
+
+	public boolean isSaveImages() {
+		return saveImages;
+	}
+
+	public void setSaveImages(boolean saveImages) {
+		this.saveImages = saveImages;
+	}
+
 	
 	
 }

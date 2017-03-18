@@ -3,5 +3,6 @@
 .classpath
 bin
 img
+conf/config.properties
 *.tiff
 *.bin

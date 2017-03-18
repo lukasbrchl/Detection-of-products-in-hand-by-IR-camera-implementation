@@ -12,30 +12,42 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="1080.0" prefWidth="1240.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
-   <center>
-      <ImageView fx:id="imageView" fitHeight="512.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER" />
-   </center>
+<BorderPane prefHeight="820.0" prefWidth="1240.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
    <bottom>
-      <HBox alignment="CENTER" prefHeight="57.0" prefWidth="800.0" BorderPane.alignment="CENTER">
+      <HBox alignment="CENTER_LEFT" prefHeight="57.0" prefWidth="800.0" BorderPane.alignment="CENTER_LEFT">
          <children>
-            <AnchorPane fx:id="openPausePane" maxHeight="25.0" maxWidth="87.0" minHeight="25.0" minWidth="87.0" prefHeight="25.0" prefWidth="87.0">
+            <AnchorPane prefHeight="33.0" prefWidth="530.0">
                <children>
-                  <Button fx:id="openStreamButton" layoutX="91.0" layoutY="13.0" mnemonicParsing="false" onAction="#openStream" text="Open stream" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                  <Button fx:id="pauseStreamButton" layoutX="104.0" layoutY="20.0" mnemonicParsing="false" onAction="#pauseStream" text="Pause stream" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <Label text="Status: " />
+                  <Label fx:id="streamStatus" layoutX="49.0" />
                </children>
+               <HBox.margin>
+                  <Insets top="10.0" />
+               </HBox.margin>
             </AnchorPane>
+            <StackPane>
+               <children>
+                  <Button fx:id="connectToStreamButton" mnemonicParsing="false" onAction="#connectToStream" text="Connect to stream" />
+                  <Button fx:id="readStreamButton" mnemonicParsing="false" onAction="#readStream" text="Read stream" visible="false" />
+                  <Button fx:id="pauseStreamButton" mnemonicParsing="false" onAction="#pauseStream" text="Pause stream" visible="false" />
+               </children>
+            </StackPane>
             <Button fx:id="closeStreamButton" mnemonicParsing="false" onAction="#closeStream" text="Close stream">
                <HBox.margin>
                   <Insets left="10.0" />
-               </HBox.margin></Button>
+               </HBox.margin>
+            </Button>
          </children>
+         <padding>
+            <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+         </padding>
       </HBox>
    </bottom>
    <left>
-      <VBox alignment="CENTER_LEFT" prefHeight="582.0" prefWidth="266.0" BorderPane.alignment="CENTER">
+      <VBox alignment="TOP_CENTER" prefHeight="582.0" prefWidth="266.0" BorderPane.alignment="CENTER">
          <children>
             <VBox prefHeight="721.0" prefWidth="252.0">
                <children>
@@ -48,8 +60,8 @@
                         </Label>
                         <AnchorPane fx:id="minTempPane" disable="true" prefHeight="22.0" prefWidth="195.0">
                            <children>
-                              <Slider fx:id="minTempSlider" layoutY="3.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
-              				  <Spinner fx:id="minTempSpinner" amountToStepBy="1" editable="true" initialValue="28" max="100.0" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
+                              <Slider fx:id="minTempSlider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
+              				  <Spinner fx:id="minTempSpinner" amountToStepBy="1" editable="true" initialValue="28" max="50.0" min="10.0" minHeight="-Infinity" minWidth="-Infinity" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
                            </children>
                         </AnchorPane>
                      </children>
@@ -66,8 +78,8 @@
                         </Label>
                         <AnchorPane fx:id="maxTempPane" disable="true" prefHeight="22.0" prefWidth="195.0">
                            <children>
-                              <Slider fx:id="maxTempSlider" layoutY="3.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
-                              <Spinner fx:id="maxTempSpinner" amountToStepBy="1" editable="true" initialValue="36.0" max="100.0" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />                              
+                              <Slider fx:id="maxTempSlider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
+                              <Spinner fx:id="maxTempSpinner" amountToStepBy="1" editable="true" initialValue="36.0" max="50" min="10.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />                              
                            </children>
                         </AnchorPane>
                      </children>
@@ -130,8 +142,8 @@
                         <Label text="Blur" />
                         <AnchorPane fx:id="blurPane" disable="true" prefHeight="22.0" prefWidth="195.0">
                            <children>
-                              <Slider fx:id="blurSlider" layoutY="3.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
-                              <Spinner fx:id="blurSpinner" amountToStepBy="1" editable="true" initialValue="0" max="100" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
+                              <Slider fx:id="blurSlider" layoutY="3.0" max="50.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
+                              <Spinner fx:id="blurSpinner" amountToStepBy="1" editable="true" initialValue="0" max="50" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
                            </children>
                         </AnchorPane>
                      </children>
@@ -209,15 +221,15 @@
                         <Label text="Threshold 1" />
                         <AnchorPane fx:id="cannyEdge1Pane" disable="true" prefHeight="22.0" prefWidth="195.0">
                            <children>
-                              <Slider fx:id="cannyEdge1Slider" layoutY="3.0" min="-100.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
-                              <Spinner fx:id="cannyEdge1Spinner" amountToStepBy="1" editable="true" initialValue="0" max="100.0" min="-100.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
+                              <Slider fx:id="cannyEdge1Slider" layoutY="3.0" max="50.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
+                              <Spinner fx:id="cannyEdge1Spinner" amountToStepBy="1" editable="true" initialValue="0" max="50.0" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
                            </children>
                         </AnchorPane>
                         <Label text="Threshold 2" />
                         <AnchorPane fx:id="cannyEdge2Pane" disable="true" prefHeight="22.0" prefWidth="195.0">
                            <children>
-                              <Slider fx:id="cannyEdge2Slider" layoutY="3.0" min="-100.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
-                              <Spinner fx:id="cannyEdge2Spinner" amountToStepBy="1" editable="true" initialValue="0" max="100.0" min="-100.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
+                              <Slider fx:id="cannyEdge2Slider" layoutY="3.0" max="50.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
+                              <Spinner fx:id="cannyEdge2Spinner" amountToStepBy="1" editable="true" initialValue="0" max="50.0" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
                            </children>
                         </AnchorPane>
                         <CheckBox fx:id="cannyEdgeCheckbox" mnemonicParsing="false" onAction="#cannyEdgeCheckboxClicked" text="Canny edge detection">
@@ -265,9 +277,6 @@
                </padding>
             </VBox>
             <VBox alignment="BOTTOM_LEFT" prefHeight="43.0" prefWidth="252.0">
-               <children>
-                  <Label fx:id="streamStatus" text="Status: " />
-               </children>
                <padding>
                   <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
                </padding>
@@ -281,4 +290,66 @@
          </padding>
       </VBox>
    </left>
+   <right>
+      <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="TOP_LEFT">
+         <children>
+            <VBox prefHeight="131.0" prefWidth="188.0">
+               <children>
+                  <Label text="Histogram" />
+                  <ImageView fx:id="histogramImage" fitHeight="128.0" fitWidth="160.0" pickOnBounds="true" preserveRatio="true">
+                     <VBox.margin>
+                        <Insets top="5.0" />
+                     </VBox.margin>
+                  </ImageView>
+               </children>
+               <padding>
+                  <Insets left="14.0" right="14.0" top="14.0" />
+               </padding>
+            </VBox>
+            <VBox prefHeight="95.0" prefWidth="188.0">
+               <children>
+                  <Label text="Original" />
+                  <ImageView fx:id="originalImage" fitHeight="128.0" fitWidth="160.0" pickOnBounds="true" preserveRatio="true">
+                     <VBox.margin>
+                        <Insets top="5.0" />
+                     </VBox.margin>
+                  </ImageView>
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+               <padding>
+                  <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+               </padding>
+            </VBox>
+            <AnchorPane prefHeight="588.0" prefWidth="188.0">
+               <children>
+                  <CheckBox fx:id="saveImagesCheckbox" mnemonicParsing="false" onAction="#saveImagesCheckboxClicked" prefWidth="176.0" text="Save incoming images" AnchorPane.bottomAnchor="0.0" />
+               </children>
+            </AnchorPane>
+         </children>
+         <padding>
+            <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+         </padding>
+      </VBox>
+   </right>
+   <center>
+      <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+         <children>
+            <ImageView fx:id="mainImage" fitHeight="512.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </ImageView>
+            <ImageView fx:id="croppedImage" fitHeight="40.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+               <VBox.margin>
+                  <Insets top="30.0" />
+               </VBox.margin>
+            </ImageView>
+         </children>
+         <BorderPane.margin>
+            <Insets bottom="14.0" top="14.0" />
+         </BorderPane.margin>
+      </VBox>
+   </center>
 </BorderPane>

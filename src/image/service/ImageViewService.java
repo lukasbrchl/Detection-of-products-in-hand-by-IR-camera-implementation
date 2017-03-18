@@ -1,6 +1,8 @@
 package image.service;
 
 import java.nio.channels.ClosedByInterruptException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.opencv.core.Mat;
 
@@ -14,7 +16,7 @@ import javafx.scene.image.Image;
 import network.DataReciever;
 import utils.Utils;
 
-public class ImageViewService extends Service<Mat> {
+public class ImageViewService extends Service<List<Mat>> {
 	
 	private final MainController mainController;
 	private final int width;
@@ -30,34 +32,33 @@ public class ImageViewService extends Service<Mat> {
 		this.height = height;
 	}
 	
-	
-	
 	@Override
-	protected Task<Mat> createTask() {
-		return new Task<Mat>() {
-			@Override protected Mat call() {				
-				Mat convertedMat = null;
+	protected Task<List<Mat>> createTask() {
+		
+		return new Task<List<Mat>>() {
+			@Override protected List<Mat> call() {				
+				List<Mat> resultMats;; //FIXME: Make object wrapper instead. First in list is maybe normalized, second is original.
+				Mat original; 
 				byte[] byteArray;
 				
-				dataReciever.initSocket();
 				try {
 					byteArray = dataReciever.getImageFromStream();
-					while (byteArray != null && byteArray.length != 0) {
-						if (mainController.getScaleTempCheckbox().isSelected()) {							
-							convertedMat = imageConvertor.convertBinaryToMat(byteArray, (float) mainController.getMinTempSlider().getValue(), (float) mainController.getMaxTempSlider().getValue());	
-						} else
-							convertedMat = imageConvertor.convertBinaryToMat(byteArray);	
-						updateValue(convertedMat);
-						if (dataReciever.isPaused()) 
-							updateMessage("Paused");
+					while (byteArray != null && byteArray.length != 0 && !isCancelled()) {
+						resultMats = new LinkedList<>();
+						original = imageConvertor.convertBinaryToMat(byteArray);
+						if (mainController.getScaleTempCheckbox().isSelected())						
+							resultMats.add(imageConvertor.convertBinaryToMat(byteArray, (float) mainController.getMinTempSlider().getValue(), (float) mainController.getMaxTempSlider().getValue()));	
 						else
-							updateMessage("Streaming");
+							resultMats.add(original);	
+						resultMats.add(original); 
+						updateValue(resultMats);
+						updateMessage(dataReciever.getStatus().getStrStatus());
 						byteArray = dataReciever.getImageFromStream();						
 					}	
 					
 				} catch (InterruptedException | ClosedByInterruptException ex ) { //catch Thread.sleep()
 				}
-				updateMessage("Stream closed");
+				updateMessage(dataReciever.getStatus().getStrStatus());
 				return null;
 			}
 		};

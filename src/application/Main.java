@@ -19,7 +19,7 @@ public class Main extends Application{
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("MainLayout.fxml"));
 			BorderPane root = (BorderPane) loader.load();
-			Scene scene = new Scene(root, 1240, 1080);
+			Scene scene = new Scene(root);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setTitle("ThesisProject");
 			primaryStage.setScene(scene);
@@ -28,7 +28,7 @@ public class Main extends Application{
 			primaryStage.setOnCloseRequest((new EventHandler<WindowEvent>() {
 				public void handle(WindowEvent we)
 				{
-					controller.setClosed();
+					
 				}
 			}));
 		}
