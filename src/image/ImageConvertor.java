@@ -14,27 +14,20 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 
 
 public class ImageConvertor {
-	private final int imageWidth, imageHeight;	
-	
-	public ImageConvertor(int width,int height) {
-		imageWidth = width;
-		imageHeight = height;
-	}
-	
-	public BufferedImage convertBinaryToBufferedImage(byte[] byteArray) {
+
+	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight) {
 		float min = bytesToCelsius(getMin(byteArray));
 		float max = bytesToCelsius(getMax(byteArray));
-		return convertBinaryToBufferedImage(byteArray, min, max);
+		return convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, min, max);
 	}
 	
-	public BufferedImage convertBinaryToBufferedImage(byte[] byteArray, float min, float max) {
+	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
 		try {
 			BufferedImage outputImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_BYTE_GRAY);
 			int counter = 0;
@@ -57,13 +50,13 @@ public class ImageConvertor {
 		return null;
 	}
 	
-	public Image convertBinaryToImage(byte[] byteArray) {
+	public static Image convertBinaryToImage(byte[] byteArray, int imageWidth, int imageHeight) {
 		float min = bytesToCelsius(getMin(byteArray));
 		float max = bytesToCelsius(getMax(byteArray));
-		return convertBinaryToImage(byteArray, min, max);
+		return convertBinaryToImage(byteArray, imageWidth, imageHeight, min, max);
 	}
 	
-	public Image convertBinaryToImage(byte[] byteArray, float min, float max) {
+	public static Image convertBinaryToImage(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
 	    WritableImage image = new WritableImage(imageWidth, imageHeight);
 	    PixelFormat<ByteBuffer> pixelFormat = PixelFormat.getByteRgbInstance();
 	    byte [] pixels = new byte[imageWidth * imageHeight * 3]; // * 3 because Image needs 3 bytes per pixel even if grayscale
@@ -78,21 +71,21 @@ public class ImageConvertor {
 	    return image;
 	}
 		
-	public Mat convertBinaryToMat(byte[] byteArray) {
-		byte [] pixels = ((DataBufferByte) convertBinaryToBufferedImage(byteArray).getRaster().getDataBuffer()).getData(); //TODO: lot ineffective			
+	public static Mat convertBinaryToMat(byte[] byteArray, int imageWidth, int imageHeight) {
+		byte [] pixels = ((DataBufferByte) convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight).getRaster().getDataBuffer()).getData(); //TODO: lot ineffective			
 		Mat mat = new Mat(imageHeight, imageWidth, CvType.CV_8U);
 		mat.put(0, 0, pixels);
 		return mat;
 	}
 	
-	public Mat convertBinaryToMat(byte[] byteArray, float min, float max) {
-		byte [] pixels = ((DataBufferByte) convertBinaryToBufferedImage(byteArray, min, max).getRaster().getDataBuffer()).getData();			
+	public static Mat convertBinaryToMat(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
+		byte [] pixels = ((DataBufferByte) convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, min, max).getRaster().getDataBuffer()).getData();			
 		Mat mat = new Mat( imageHeight, imageWidth, CvType.CV_8U);
 		mat.put(0, 0, pixels);
 		return mat;
 	}
 	
-	public BufferedImage convertMatToBufferedImage(Mat m){
+	public static BufferedImage convertMatToBufferedImage(Mat m){
  	    byte [] buffer = new byte[m.channels()*m.cols()*m.rows()];
  	    m.get(0, 0, buffer); 
  	    BufferedImage image = new BufferedImage(m.cols(), m.rows(), BufferedImage.TYPE_BYTE_GRAY);
@@ -101,13 +94,13 @@ public class ImageConvertor {
  	    return image;
  	}
 	 
-	public Image convertMatToImage(Mat m) {
-		WritableImage image = new WritableImage(imageWidth, imageHeight);
+	public static Image convertMatToImage(Mat m) {
+		WritableImage image = new WritableImage(m.width(), m.height());
 		byte [] data = new byte[m.cols() * m.rows() * 3]; // * 3 because Image needs 3 bytes per pixel even if grayscale
 		Mat rgbMat = new Mat();  
 		Imgproc.cvtColor(m, rgbMat, Imgproc.COLOR_GRAY2RGB); //TODO: inefficient, but is there other way? SwingFXUtils.toFXImage = slow
 		rgbMat.get(0, 0, data);
-	    image.getPixelWriter().setPixels(0, 0, imageWidth, imageHeight, PixelFormat.getByteRgbInstance(), data, 0, imageWidth*3); 
+	    image.getPixelWriter().setPixels(0, 0, m.width(), m.height(), PixelFormat.getByteRgbInstance(), data, 0, m.width()*3); 
  	    return image;
 	 	}
 	
@@ -158,7 +151,7 @@ public class ImageConvertor {
 	}
 	
 	//debugging purpose
-	public void saveAsAsciiPgm(byte[] byteArray, String fileName) {
+	public void saveAsAsciiPgm(byte[] byteArray, int imageWidth, int imageHeight, String fileName) {
 		try {
 			float min = bytesToCelsius(getMin(byteArray));
 			float max = bytesToCelsius(getMax(byteArray));
