@@ -11,6 +11,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
@@ -38,6 +39,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import network.DataReciever;
 import network.DataReciever.Status;
 import javafx.scene.control.Label;
@@ -51,12 +53,18 @@ public class MainController {
 	public static final int IMAGE_WIDTH = 640;
 	public static final int IMAGE_HEIGHT = 512;
 	public static final int IMAGE_CROPPED_WIDTH = 640;
-	public static final int IMAGE_CROPPED_HEIGHT = 40;
+	public static final int IMAGE_CROPPED_HEIGHT = 150;
 	public static final int PANEL_IMAGE_WIDTH = 160;
 	public static final int PANEL_IMAGE_HEIGHT = 128;
+	public static final int PANEL_CROPPED_IMAGE_WIDTH = 160;
+	public static final int PANEL_CROPPED_IMAGE_HEIGHT = 37;
+	
+	public static final int CROP_OFFSET_X = 0;
+	public static final int CROP_OFFSET_Y = 200;
+
 
 	//Image containers
-	@FXML private ImageView mainImage, originalImage, histogramImage, croppedImage;
+	@FXML private ImageView mainImageView, handImageView, goodsImageView, originalImageView, histogramImageView, originalCroppedImageView;
 	//Stream buttons
 	@FXML private Button connectToStreamButton, readStreamButton, closeStreamButton, pauseStreamButton;
 	@FXML private AnchorPane openPausePane;
@@ -68,33 +76,37 @@ public class MainController {
 	@FXML private Spinner<Double> minTempSpinner, maxTempSpinner;
 	@FXML private CheckBox scaleTempCheckbox;
 	@FXML private AnchorPane minTempPane, maxTempPane;
-	//Brightness and contrast
-	@FXML private Slider brightnessSlider, contrastSlider;	
-	@FXML private Spinner<Double> brightnessSpinner, contrastSpinner;
+	//Brightness and contrast	
+	@FXML private Spinner<Double> brightnessSpinner, addSpinner, contrastSpinner, multSpinner;
 	//Blur
-	@FXML private Slider blurSlider;
-	@FXML private Spinner<Double> blurSpinner;
+	@FXML private Spinner<Double> blur1Spinner, blur2Spinner, blurSigmaSpinner;
 	@FXML private CheckBox blurCheckbox;
-	@FXML private ChoiceBox<String> blurChoiceBox;
-	@FXML private AnchorPane blurPane;
+	@FXML private HBox blurPane;
+	//Canny edge
+	@FXML private Spinner<Double> cannyEdge1Spinner, cannyEdge2Spinner;
+	@FXML private CheckBox cannyEdgeCheckbox;
+	@FXML private HBox cannyEdgePane;
+	//Contours
+	@FXML private CheckBox drawContoursCheckbox;
+	@FXML private Spinner<Double> contourMinSizeSpinner;
+	@FXML private Label foundContoursLabel;
+	@FXML private CheckBox convexHullCheckbox;
+	//Mask
+	@FXML private CheckBox maskGoodsCheckbox;
+	
 	//Binary and otsu threshold
 	@FXML private Slider binaryThresholdSlider, otsuCorrectionSlider;
 	@FXML private Spinner<Double> binaryThresholdSpinner, otsuCorrectionSpinner;
 	@FXML private CheckBox binaryThresholdCheckbox, otsuThresholdCheckbox;
 	@FXML private AnchorPane binaryThresholdPane, otsuCorrectionPane;	
-	//Canny edge
-	@FXML private Slider cannyEdge1Slider, cannyEdge2Slider;
-	@FXML private Spinner<Double> cannyEdge1Spinner, cannyEdge2Spinner;
-	@FXML private CheckBox cannyEdgeCheckbox;
-	@FXML private AnchorPane cannyEdge1Pane, cannyEdge2Pane;
+
 	//Dilate and erode
 	@FXML private Slider morphSlider;
 	@FXML private Spinner<Double> morphSpinner;
 	@FXML private CheckBox dilateCheckbox, erodeCheckbox;
 	@FXML private AnchorPane morphPane;
 
-	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty, brightnessDoubleProperty, contrastDoubleProperty, blurDoubleProperty, binaryThresholdDoubleProperty, otsuCorrectionDoubleProperty, 
-	cannyEdge1DoubleProperty, cannyEdge2DoubleProperty, morphDoubleProperty;  //prevents GC from cleaning weak listeners
+	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty,  binaryThresholdDoubleProperty, otsuCorrectionDoubleProperty, morphDoubleProperty;  //prevents GC from cleaning weak listeners
 	private ImageViewService imv;
 	private ImageConvertor imgConv, imgCroppedConv;
 	private DataReciever dataReciever;
@@ -126,17 +138,39 @@ public class MainController {
 		
 		imv = new ImageViewService(this, imgConv, dataReciever, IMAGE_WIDTH, IMAGE_HEIGHT);
 		imv.valueProperty().addListener((obs, oldValue, newValue) -> { 
-			Mat enchancedMat = enchanceMat(newValue.get(0));
-//			Mat croppedMat = new Mat(enchancedMat, new Rect(0, 472, 640, 40));
-//			Image croppedImg = imgCroppedConv.convertMatToImage(croppedMat);
-			Image processedImage = imgConv.convertMatToImage(enchancedMat);
-			Image originalImg = imgConv.convertMatToImage(newValue.get(1));
-			Image histogramImg = imgConv.convertMatToImage(createHistogram(enchancedMat));			
-			Utils.updateFXControl(mainImage.imageProperty(), processedImage);
-//			Utils.updateFXControl(croppedImage.imageProperty(), croppedImg);
-			Utils.updateFXControl(originalImage.imageProperty(), originalImg);
-			Utils.updateFXControl(histogramImage.imageProperty(), histogramImg);
-			});
+			Mat originalMat = newValue.get(1);
+			Mat scaledMat = newValue.get(0);
+			Mat originalCroppedMat = new Mat(originalMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));
+			Mat croppedMat;
+			//center
+			Mat enhancedMat = enchanceMat(scaledMat);
+			croppedMat = new Mat(enhancedMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));
+			Mat handMat = croppedMat.clone();
+			Mat goodsMat = croppedMat.clone();
+			
+			if (drawContoursCheckbox.isSelected()) 
+				handMat = drawContours(handMat);
+			else if (!drawContoursCheckbox.isSelected() && convexHullCheckbox.isSelected()) 
+				handMat = drawConvexHull(handMat);
+			else if (maskGoodsCheckbox.isSelected()) 
+				handMat = maskGoods(originalCroppedMat, drawConvexHull(handMat));
+	
+			
+			Image enhancedImage = imgConv.convertMatToImage(enhancedMat);
+			Image handImage = imgCroppedConv.convertMatToImage(handMat);
+			Image goodsImage = imgCroppedConv.convertMatToImage(goodsMat);
+			Utils.updateFXControl(mainImageView.imageProperty(), enhancedImage);
+			Utils.updateFXControl(handImageView.imageProperty(), handImage);
+			Utils.updateFXControl(goodsImageView.imageProperty(), goodsImage);
+			
+			//panel
+			Image originalImage = imgConv.convertMatToImage(originalMat);
+			Image histogramImage = imgConv.convertMatToImage(createHistogram(enhancedMat));	
+			Image originalCroppedImage = imgCroppedConv.convertMatToImage(originalCroppedMat);
+			Utils.updateFXControl(originalImageView.imageProperty(), originalImage);
+			Utils.updateFXControl(histogramImageView.imageProperty(), histogramImage);
+			Utils.updateFXControl(originalCroppedImageView.imageProperty(), originalCroppedImage);
+		});
 		imv.messageProperty().addListener((obs, oldValue, newValue) -> { 
 			streamStatus.setText(newValue);
 			});
@@ -171,10 +205,6 @@ public class MainController {
 	
 	@FXML 
 	protected void blurCheckboxClicked(ActionEvent event) {
-		if(blurCheckbox.isSelected()) 
-			blurPane.setDisable(false);
-		else
-			blurPane.setDisable(true);
 	}
 	
 	@FXML 
@@ -195,15 +225,6 @@ public class MainController {
 	
 	@FXML 
 	protected void cannyEdgeCheckboxClicked(ActionEvent event) {
-		if(cannyEdgeCheckbox.isSelected())  {
-			cannyEdge1Pane.setDisable(false);
-			cannyEdge2Pane.setDisable(false);
-		}
-		else {
-			cannyEdge1Pane.setDisable(true);
-			cannyEdge2Pane.setDisable(true);
-
-		}
 	}
 	
 	@FXML
@@ -225,30 +246,21 @@ public class MainController {
 		if (saveImagesCheckbox.isSelected()) dataReciever.setSaveImages(true);
 		else dataReciever.setSaveImages(false);
 	}
+	
 	//helper methods
 	
 	//init helpers
 	private void bindSpinnersToSliders() {	 
 		 minTempDoubleProperty = DoubleProperty.doubleProperty(minTempSpinner.getValueFactory().valueProperty());
 		 maxTempDoubleProperty = DoubleProperty.doubleProperty(maxTempSpinner.getValueFactory().valueProperty());
-		 brightnessDoubleProperty = DoubleProperty.doubleProperty(brightnessSpinner.getValueFactory().valueProperty());
-		 contrastDoubleProperty = DoubleProperty.doubleProperty(contrastSpinner.getValueFactory().valueProperty());
-		 blurDoubleProperty = DoubleProperty.doubleProperty(blurSpinner.getValueFactory().valueProperty());
 		 binaryThresholdDoubleProperty = DoubleProperty.doubleProperty(binaryThresholdSpinner.getValueFactory().valueProperty());
-		 otsuCorrectionDoubleProperty = DoubleProperty.doubleProperty(otsuCorrectionSpinner.getValueFactory().valueProperty());		
-		 cannyEdge1DoubleProperty = DoubleProperty.doubleProperty(cannyEdge1Spinner.getValueFactory().valueProperty());
-		 cannyEdge2DoubleProperty = DoubleProperty.doubleProperty(cannyEdge2Spinner.getValueFactory().valueProperty());
+		 otsuCorrectionDoubleProperty = DoubleProperty.doubleProperty(otsuCorrectionSpinner.getValueFactory().valueProperty());				
 		 morphDoubleProperty = DoubleProperty.doubleProperty(morphSpinner.getValueFactory().valueProperty());
 	
 	     minTempSlider.valueProperty().bindBidirectional(minTempDoubleProperty);
 	     maxTempSlider.valueProperty().bindBidirectional(maxTempDoubleProperty);
-	     brightnessSlider.valueProperty().bindBidirectional(brightnessDoubleProperty);
-	     contrastSlider.valueProperty().bindBidirectional(contrastDoubleProperty);
-	     blurSlider.valueProperty().bindBidirectional(blurDoubleProperty);
 	     binaryThresholdSlider.valueProperty().bindBidirectional(binaryThresholdDoubleProperty);
-	     otsuCorrectionSlider.valueProperty().bindBidirectional(otsuCorrectionDoubleProperty);        
-	     cannyEdge1Slider.valueProperty().bindBidirectional(cannyEdge1DoubleProperty);
-	     cannyEdge2Slider.valueProperty().bindBidirectional(cannyEdge2DoubleProperty);
+	     otsuCorrectionSlider.valueProperty().bindBidirectional(otsuCorrectionDoubleProperty);   
 	     morphSlider.valueProperty().bindBidirectional(morphDoubleProperty);
 	     
 	     //focus
@@ -262,26 +274,39 @@ public class MainController {
 	 
 	//Mat operations		
 	private Mat enchanceMat(Mat mat) {
-		if (brightnessDoubleProperty.getValue() != 0 || contrastDoubleProperty.getValue() != 0) doBrightnessContrast(mat);
-		if (blurCheckbox.isSelected()) doBlurImage(mat);
-		if (binaryThresholdCheckbox.isSelected()) doBinaryTreshold(mat);
-		if (otsuThresholdCheckbox.isSelected())	doOtsuTreshold(mat);
+		if (brightnessSpinner.getValue() != 0 || contrastSpinner.getValue() != 0) doBrightnessContrast(mat);
+		if (addSpinner.getValue() != 0 || multSpinner.getValue() != 0) doAddMult(mat);
+		if (blurCheckbox.isSelected()) mat = doBlurImage(mat);
 		if (cannyEdgeCheckbox.isSelected()) mat = doCannyEdgeDetection(mat);
 		if (dilateCheckbox.isSelected()) dilate(mat);
 		if (erodeCheckbox.isSelected()) erode(mat);
+		
+		if (binaryThresholdCheckbox.isSelected()) doBinaryTreshold(mat);
+		if (otsuThresholdCheckbox.isSelected())	doOtsuTreshold(mat);
+	
 		return mat;
 	}
-	
-	private Mat doBrightnessContrast(Mat mat) {
-		mat.convertTo(mat, -1, brightnessDoubleProperty.getValue() + 1, -contrastDoubleProperty.getValue());
+
+	private Mat doBrightnessContrast(Mat mat) { //CLAHE http://docs.opencv.org/trunk/d5/daf/tutorial_py_histogram_equalization.html
+		mat.convertTo(mat, -1, brightnessSpinner.getValue() + 1, -contrastSpinner.getValue());
+		return mat;
+	}
+
+	private Mat doAddMult(Mat mat) {
+        Core.add(mat, Scalar.all(addSpinner.getValue()), mat);
+        Core.multiply(mat, Scalar.all(multSpinner.getValue() + 1), mat);
 		return mat;
 	}
 	
 	private Mat doBlurImage(Mat mat) {
-		int size = (int) blurSlider.getValue();
-		if (size % 2 == 0) ++size;
-		Imgproc.GaussianBlur(mat, mat, new Size(size, size), 2);
-		return mat;
+		double size1 = blur1Spinner.getValue();
+		double size2 = blur2Spinner.getValue();
+		if (size1 % 2 == 0) ++size1;		
+		if (size2 % 2 == 0) ++size2;
+		Mat resultMat = mat.clone();
+		Imgproc.GaussianBlur(mat, resultMat, new Size(size1, size2), blurSigmaSpinner.getValue());
+//		Imgproc.bilateralFilter(mat, resultMat, blurSigmaSpinner.getValue().intValue(), blur1Spinner.getValue(), blur2Spinner.getValue());
+		return resultMat;
 	}
 	
 	private Mat doBinaryTreshold(Mat mat) {
@@ -294,56 +319,99 @@ public class MainController {
 		return mat;
 	}	
 	
-	private Mat doCannyEdgeDetection(Mat mat) {
+	private Mat doCannyEdgeDetection(Mat mat) { //todo 2 params
 		Mat detectedEdges = new Mat();		
-		Imgproc.Canny(mat, mat, cannyEdge1Slider.getValue(), cannyEdge2Slider.getValue());
+		Imgproc.Canny(mat, mat, cannyEdge1Spinner.getValue(), cannyEdge2Spinner.getValue());
 		Mat dest = new Mat();
 		mat.copyTo(dest, detectedEdges);
-
-	    Point shift=new Point(150,0);
-
-		List<MatOfPoint> contours = new ArrayList<MatOfPoint>();    
-
-        Imgproc.findContours(dest, contours,  new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-        double[] cont_area =new double[contours.size()]; 
-		Mat result = new Mat();
-//		
-//		  for(int i=0; i< contours.size();i++){
-//		        System.out.println(Imgproc.contourArea(contours.get(i)));
-//		        if (Imgproc.contourArea(contours.get(i)) > 50 ){
-//		            Rect rect = Imgproc.boundingRect(contours.get(i));
-//		            System.out.println(rect.height);
-//		            if (rect.height > 28){
-//		            //System.out.println(rect.x +","+rect.y+","+rect.height+","+rect.width);
-////		            	Imgproc.rectangle(dest, new Point(rect.x,rect.height), new Point(rect.y,rect.width),new Scalar(0,0,255));
-//		            	Imgproc.rectangle(dest, new Point(rect.x,rect.y), new Point(rect.x+rect.width,rect.y+rect.height),new Scalar(0,0,255));
-//		            }
-//		        }
-//		    }
-		
-        
-//        for(int i=0; i< contours.size();i++){
-//            if (Imgproc.contourArea(contours.get(i)) > 50 ){
-//                Rect rect = Imgproc.boundingRect(contours.get(i));
-//                cont_area[i]=Imgproc.contourArea(contours.get(i));
-//
-//                if (rect.height > 25){
-//                	Imgproc.rectangle(result, new Point(rect.x,rect.y), new Point(rect.x+rect.width,rect.y+rect.height),new Scalar(0,0,255));
-//
-//                    System.out.println(rect.x +"-"+ rect.y +"-"+ rect.height+"-"+rect.width);
-//                }
-//            }
-//        }
-        
-//		Mat temp = new Mat(), out = new Mat();
-//		dest.copyTo(temp);
-//		Mat im_floodfill = temp;
-//	    Imgproc.floodFill(im_floodfill, new Mat(), new Point(0,0), new Scalar(255));
-////	    Mat im_floodfill_inv = new Mat();
-////	    Core.bitwise_not(im_floodfill, im_floodfill_inv);		   
-////	    Core.bitwise_or(dest, im_floodfill_inv, out);
 		
 		return dest;
+	}
+	
+	private List<MatOfPoint> findContours(Mat mat, boolean findOnEdge) {
+		List<MatOfPoint> allContours = new ArrayList<MatOfPoint>();    
+		List<MatOfPoint> filteredContours = new ArrayList<MatOfPoint>();    
+		
+		 Mat biggerMat = new Mat(mat.rows() + 4, mat.cols() + 4, mat.type());
+	     Core.copyMakeBorder(mat, biggerMat, 2, 2, 2, 2, Core.BORDER_CONSTANT, Scalar.all(0));
+
+        Imgproc.findContours(biggerMat, allContours,  new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+        for (int i = 0; i < allContours.size(); i++) {
+        	double countourArea = Imgproc.contourArea(allContours.get(i));	      
+	        if (countourArea > contourMinSizeSpinner.getValue()) filteredContours.add(allContours.get(i));	      
+		}        
+        foundContoursLabel.setText(" " + Integer.toString(filteredContours.size()));
+        return filteredContours;
+	}
+
+	private Mat drawContours(Mat mat) {
+		List <MatOfPoint> contours = findContours(mat, true);	
+		Mat contourImg = new Mat(IMAGE_CROPPED_HEIGHT, IMAGE_CROPPED_WIDTH, CvType.CV_8U, new Scalar(0,0,0));
+				
+		for (int i = 0; i < contours.size(); i++) {
+		    Imgproc.drawContours(contourImg, contours, i, new Scalar(255, 0, 0), -1);
+		}
+		return contourImg;	
+	}
+	
+	private Mat drawConvexHull(Mat mat) {
+		Mat contoursMat = drawContours(mat);
+        MatOfPoint points = new MatOfPoint();
+        MatOfInt hullTemp = new MatOfInt();
+		Mat result = new Mat(IMAGE_CROPPED_HEIGHT, IMAGE_CROPPED_WIDTH, CvType.CV_8U, new Scalar(0,0,0));        
+        Core.findNonZero(contoursMat, points);   
+        if (points == null || points.empty()) return mat;        
+		
+        Imgproc.convexHull(points, hullTemp);		
+        
+        MatOfPoint mopOut = new MatOfPoint();
+        mopOut.create((int)hullTemp.size().height,1,CvType.CV_32SC2);
+
+        for(int i = 0; i < hullTemp.size().height ; i++)
+        {
+            int index = (int)hullTemp.get(i, 0)[0];
+            double[] point = new double[] {
+            		points.get(index, 0)[0], points.get(index, 0)[1]
+            };
+            mopOut.put(i, 0, point);
+        }        
+        
+        List<MatOfPoint> cnl = new ArrayList<>();
+        cnl.add(mopOut);
+        Imgproc.drawContours(result, cnl, -1, Scalar.all(255), Core.FILLED);        
+        return result;
+	}
+	
+	private Mat maskGoods(Mat matToMask, Mat mask) {
+		Mat result = new Mat(matToMask.rows(), matToMask.cols(), matToMask.type(), new Scalar(0,0,0));        
+		matToMask.copyTo(result, mask);
+		return result;
+	}
+	
+	private Mat aproxCurve(Mat mat) { //TODO: containts bugs
+		Mat contoursMat = drawContours(mat);
+		
+		MatOfPoint points = new MatOfPoint();
+		MatOfPoint2f thisContour2f = new MatOfPoint2f();
+		MatOfPoint approxContour = new MatOfPoint();
+		MatOfPoint2f approxContour2f = new MatOfPoint2f();
+		
+		Core.findNonZero(contoursMat, points);   
+		
+        if (points == null || points.empty()) return mat;        		
+		
+        points.convertTo(thisContour2f, CvType.CV_32FC1);
+		
+		Imgproc.approxPolyDP(thisContour2f, approxContour2f, 2, false);
+		
+		approxContour2f.convertTo(approxContour, CvType.CV_32S);
+		
+		
+		Mat result = new Mat(IMAGE_CROPPED_HEIGHT, IMAGE_CROPPED_WIDTH, CvType.CV_8U, new Scalar(0,0,0));     
+		List<MatOfPoint> cnl = new ArrayList<>();
+        cnl.add(approxContour);
+        Imgproc.drawContours(result, cnl, -1, Scalar.all(255), Core.FILLED);   
+        return result;
 	}
 	
 	private void dilate(Mat mat) {
