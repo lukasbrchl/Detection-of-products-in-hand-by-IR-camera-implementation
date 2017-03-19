@@ -16,36 +16,49 @@
 
 <BorderPane prefHeight="820.0" prefWidth="1240.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
    <bottom>
-      <HBox alignment="CENTER_LEFT" prefHeight="69.0" prefWidth="1240.0" BorderPane.alignment="CENTER_LEFT">
+      <HBox alignment="CENTER_LEFT" prefHeight="57.0" prefWidth="1240.0" BorderPane.alignment="CENTER_LEFT">
          <children>
             <VBox prefHeight="55.0" prefWidth="482.0">
                <children>
                   <HBox prefHeight="15.0" prefWidth="482.0">
                      <children>
-                        <Label text="Stream status:" />
+                        <Label text="Stream status: " />
                         <Label fx:id="streamStatusLabel" />
                      </children>
                   </HBox>
                   <HBox prefHeight="22.0" prefWidth="482.0">
                      <children>
-                        <Label text="Recognized" />
+                        <Label text="Recognized: " />
                         <Label fx:id="recognizedLabel" />
                      </children>
                   </HBox>
                </children>
             </VBox>
-            <StackPane>
+            <HBox prefHeight="25.0" prefWidth="501.0">
                <children>
-                  <Button fx:id="connectToStreamButton" mnemonicParsing="false" onAction="#connectToStream" text="Connect to stream" />
-                  <Button fx:id="readStreamButton" mnemonicParsing="false" onAction="#readStream" text="Read stream" visible="false" />
-                  <Button fx:id="pauseStreamButton" mnemonicParsing="false" onAction="#pauseStream" text="Pause stream" visible="false" />
+                  <StackPane alignment="TOP_CENTER" prefHeight="19.0" prefWidth="114.0" snapToPixel="false">
+                     <children>
+                        <Button fx:id="readStreamButton" mnemonicParsing="false" onAction="#readStream" text="Read stream" visible="false" />
+                        <Button fx:id="pauseStreamButton" mnemonicParsing="false" onAction="#pauseStream" text="Pause stream" visible="false" />
+                        <Button fx:id="connectToStreamButton" mnemonicParsing="false" onAction="#connectToStream" text="Connect to stream" />
+                     </children>
+                  </StackPane>
+                  <Button fx:id="closeStreamButton" mnemonicParsing="false" onAction="#closeStream" text="Close stream">
+                     <HBox.margin>
+                        <Insets left="10.0" />
+                     </HBox.margin>
+                  </Button>
                </children>
-            </StackPane>
-            <Button fx:id="closeStreamButton" mnemonicParsing="false" onAction="#closeStream" text="Close stream">
+               <HBox.margin>
+                  <Insets top="10.0" />
+               </HBox.margin>
+            </HBox>
+            <Label text="Playback speed" />
+            <Spinner fx:id="playbackSpeedSpinner" amountToStepBy="20" editable="true" initialValue="33" max="300.0" min="0.0" prefHeight="25.0" prefWidth="105.0">
                <HBox.margin>
                   <Insets left="10.0" />
                </HBox.margin>
-            </Button>
+            </Spinner>
          </children>
          <padding>
             <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
@@ -57,6 +70,7 @@
          <children>
             <VBox prefHeight="721.0" prefWidth="252.0">
                <children>
+                  <Label alignment="CENTER" prefHeight="17.0" prefWidth="325.0" text="Global adjustments" />
                   <VBox prefHeight="29.0" prefWidth="238.0">
                      <children>
                         <Label text="Min">
@@ -85,7 +99,7 @@
                         <AnchorPane fx:id="maxTempPane" prefHeight="22.0" prefWidth="195.0">
                            <children>
                               <Slider fx:id="maxTempSlider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
-                              <Spinner fx:id="maxTempSpinner" amountToStepBy="1" editable="true" initialValue="32.5" max="50" min="10.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />                              
+                              <Spinner fx:id="maxTempSpinner" amountToStepBy="1" editable="true" initialValue="34.5" max="50" min="10.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />                              
                            </children>
                         </AnchorPane>
                      </children>
@@ -102,34 +116,45 @@
                         <Insets bottom="10.0" top="10.0" />
                      </padding>
                   </Separator>
+                  <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="17.0" prefWidth="281.0" text="Exposure" />
+                  <HBox prefHeight="18.0" prefWidth="238.0">
+                     <children>
+                        <Label text="Clache" />
+                        <Spinner fx:id="clache1Spinner" amountToStepBy="1" editable="true" initialValue="10.0" max="50.0" min="-10.0" prefWidth="60.0" />
+                        <Spinner fx:id="clache2Spinner" amountToStepBy="1" editable="true" initialValue="10.0" max="50.0" min="-10" prefWidth="60.0" />
+                        <Spinner fx:id="clacheClipSpinner" amountToStepBy="1" initialValue="3.0" max="50.0" min="-10.0" editable="true" prefHeight="25.0" prefWidth="64.0" />
+                     </children>
+                  </HBox>
                   <HBox prefHeight="18.0" prefWidth="238.0">
                      <children>
                         <Label text="Brigthness" />
                         <Spinner fx:id="brightnessSpinner" amountToStepBy="0.1" editable="true" initialValue="0" max="10.0" min="-10.0" prefWidth="60.0" />
-                        <Spinner fx:id="addSpinner" amountToStepBy="10" editable="true" initialValue="-30" max="200.0" min="-200.0" prefWidth="60.0" />
-                     </children></HBox>
-                  <Separator prefWidth="200.0">
-                     <padding>
-                        <Insets top="10.0" />
-                     </padding>
-                  </Separator>
+                        <Spinner fx:id="addSpinner" amountToStepBy="10" editable="true" initialValue="0" max="200.0" min="-200.0" prefWidth="60.0" />
+                     </children>
+                     <VBox.margin>
+                        <Insets top="5.0" />
+                     </VBox.margin></HBox>
                   <HBox prefHeight="28.0" prefWidth="238.0">
                      <children>
                         <Label text="Contrast" />
-                        <Spinner fx:id="contrastSpinner" amountToStepBy="10" editable="true" initialValue="60" max="100.0" min="-100.0" prefWidth="60.0" />
-                        <Spinner fx:id="multSpinner" amountToStepBy="0.1" editable="true" initialValue="1" max="100" min="-1" prefWidth="60.0" />
+                        <Spinner fx:id="contrastSpinner" amountToStepBy="10.0" editable="true" initialValue="0" max="100.0" min="-100.0" prefWidth="60.0" />
+                        <Spinner fx:id="multSpinner" amountToStepBy="0.1" editable="true" initialValue="0" max="100" min="-1" prefWidth="60.0" />
                      </children>
+                     <VBox.margin>
+                        <Insets top="5.0" />
+                     </VBox.margin>
                   </HBox>
                   <Separator prefWidth="200.0">
                      <padding>
                         <Insets bottom="10.0" top="10.0" />
                      </padding>
                   </Separator>
+                  <Label alignment="CENTER" prefHeight="17.0" prefWidth="314.0" text="Blur" />
                   <HBox fx:id="blurPane" prefHeight="29.0" prefWidth="238.0">
                      <children>
-                        <CheckBox fx:id="blurCheckbox" mnemonicParsing="true" onAction="#blurCheckboxClicked" selected="true" text="Blur" />
-                        <Spinner fx:id="blur1Spinner" amountToStepBy="1" editable="true" initialValue="8" max="50" min="0.0" prefWidth="60.0" />
-                        <Spinner fx:id="blur2Spinner" amountToStepBy="1" editable="true" initialValue="8" max="50" min="0.0" prefWidth="60.0" />
+                        <CheckBox fx:id="blurCheckbox" mnemonicParsing="true" onAction="#blurCheckboxClicked" selected="true" text="Enable" />
+                        <Spinner fx:id="blur1Spinner" amountToStepBy="1" editable="true" initialValue="10" max="50" min="0.0" prefWidth="60.0" />
+                        <Spinner fx:id="blur2Spinner" amountToStepBy="1" editable="true" initialValue="10" max="50" min="0.0" prefWidth="60.0" />
                         <Spinner fx:id="blurSigmaSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="60.0" />
                      </children>
                   </HBox>
@@ -138,72 +163,32 @@
                         <Insets bottom="10.0" top="10.0" />
                      </padding>
                   </Separator>
+                  <Label alignment="CENTER" prefHeight="17.0" prefWidth="275.0" text="Goods segmentation settings" />
                   <HBox fx:id="cannyEdgePane" prefHeight="28.0" prefWidth="238.0">
                      <children>
-                        <CheckBox fx:id="cannyEdgeCheckbox" mnemonicParsing="false" onAction="#cannyEdgeCheckboxClicked" selected="true" text="Canny " />
+                        <Label text="Canny threshold" />
                         <Spinner fx:id="cannyEdge1Spinner" amountToStepBy="10" editable="true" initialValue="20" max="250.0" min="0.0" prefWidth="60.0" />
                         <Spinner fx:id="cannyEdge2Spinner" amountToStepBy="10" editable="true" initialValue="40" max="250.0" min="0.0" prefWidth="60.0" />
                      </children>
+                     <VBox.margin>
+                        <Insets top="5.0" />
+                     </VBox.margin>
                   </HBox>
-                  <Separator prefWidth="200.0">
-                     <padding>
-                        <Insets bottom="10.0" top="10.0" />
-                     </padding>
-                  </Separator>
-                  <VBox prefHeight="37.0" prefWidth="238.0">
+                  <HBox prefHeight="17.0" prefWidth="238.0">
                      <children>
-                        <Label text="Size" />
-                        <AnchorPane fx:id="morphPane" prefHeight="22.0" prefWidth="195.0">
-                           <children>
-                              <Slider fx:id="morphSlider" layoutY="3.0" max="50.0" min="0.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
-                              <Spinner fx:id="morphSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
-                           </children>
-                        </AnchorPane>
-                     </children>
-                     <padding>
-                        <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
-                     </padding>
-                  </VBox>
-                  <HBox prefHeight="30.0" prefWidth="141.0">
-                     <children>
-                        <CheckBox fx:id="dilateCheckbox" mnemonicParsing="false" onAction="#morphCheckboxClicked" selected="true" text="Dilate" />
-                        <CheckBox fx:id="erodeCheckbox" mnemonicParsing="false" onAction="#morphCheckboxClicked" text="Erode">
-                           <HBox.margin>
-                              <Insets left="10.0" />
-                           </HBox.margin>
-                        </CheckBox>
+                        <Label text="Dilate" />
+                        <Spinner fx:id="dilateSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="60.0" />
                      </children>
                   </HBox>
-                  <Separator prefWidth="200.0">
-                     <padding>
-                        <Insets bottom="10.0" top="10.0" />
-                     </padding>
-                  </Separator>
-                  <HBox prefHeight="9.0" prefWidth="238.0">
+                  <HBox prefHeight="17.0" prefWidth="238.0">
                      <children>
-                        <CheckBox fx:id="drawContoursCheckbox" mnemonicParsing="false" text="Draw contours" />
+                        <Label text="Min contour area" />
                         <Spinner fx:id="contourMinSizeSpinner" editable="true" initialValue="15" max="150" min="0.0" prefHeight="25.0" prefWidth="64.0" />
                         <Label text="Found :" />
                         <Label fx:id="foundContoursLabel" text=" 0" />
                      </children>
                   </HBox>
-                  <Separator prefWidth="200.0">
-                     <padding>
-                        <Insets bottom="10.0" top="10.0" />
-                     </padding>
-                  </Separator>
-                  <HBox prefHeight="100.0" prefWidth="200.0">
-                     <children>
-                        <CheckBox fx:id="convexHullCheckbox" mnemonicParsing="false" text="Draw convex hull" />
-                     </children>
-                  </HBox>
-                  <Separator prefWidth="200.0">
-                     <padding>
-                        <Insets bottom="10.0" top="10.0" />
-                     </padding>
-                  </Separator>
-                  <HBox prefHeight="100.0" prefWidth="200.0" />
-                  <CheckBox fx:id="maskGoodsCheckbox" mnemonicParsing="false" text="Mask goods" />
+                  <HBox prefHeight="9.0" prefWidth="238.0" />
                   <Separator prefWidth="200.0">
                      <padding>
                         <Insets bottom="10.0" top="10.0" />
@@ -211,46 +196,30 @@
                   </Separator>
                   <VBox prefHeight="40.0" prefWidth="238.0">
                      <children>
+                        <Label alignment="CENTER" prefHeight="17.0" prefWidth="278.0" text="Hand segmentation settings" />
                         <Label text="Threshold" />
-                        <AnchorPane fx:id="binaryThresholdPane" disable="true" prefHeight="22.0" prefWidth="195.0">
+                        <AnchorPane fx:id="binaryThresholdPane" prefHeight="22.0" prefWidth="195.0">
                            <children>
                               <Slider fx:id="binaryThresholdSlider" layoutY="3.0" max="255.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
-                              <Spinner fx:id="binaryThresholdSpinner" amountToStepBy="1" editable="true" initialValue="127" max="255" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />   
+                              <Spinner fx:id="binaryThresholdSpinner" amountToStepBy="1" editable="true" initialValue="140" max="255" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />   
                            </children>
                         </AnchorPane>
                      </children>
                      <padding>
-                        <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+                        <Insets bottom="7.0" left="7.0" right="7.0" />
                      </padding>
                   </VBox>
-                  <CheckBox fx:id="binaryThresholdCheckbox" mnemonicParsing="false" onAction="#binaryThresholdCheckboxClicked" text="Binary threshold">
-                     <VBox.margin>
-                        <Insets top="5.0" />
-                     </VBox.margin>
-                  </CheckBox>
                   <Separator prefWidth="200.0">
                      <padding>
                         <Insets top="10.0" />
                      </padding>
                   </Separator>
-                  <VBox prefHeight="22.0" prefWidth="238.0">
-                     <children>
-                        <Label text="Otsu correction" />
-                        <AnchorPane fx:id="otsuCorrectionPane" disable="true" prefHeight="22.0" prefWidth="195.0">
-                           <children>
-                              <Slider fx:id="otsuCorrectionSlider" layoutY="3.0" min="-100.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
-                              <Spinner fx:id="otsuCorrectionSpinner" amountToStepBy="1" editable="true" initialValue="0" max="100.0" min="-100.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />   
-                           </children>
-                        </AnchorPane>
-                     </children>
-                     <padding>
-                        <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
-                     </padding>
-                  </VBox>
-                  <CheckBox fx:id="otsuThresholdCheckbox" mnemonicParsing="false" onAction="#otsuThresholdCheckboxClicked" text="Otsu threshold">
-                     <VBox.margin>
-                        <Insets top="5.0" />
-                     </VBox.margin></CheckBox>
+                  <Label text="Preview image settings" />
+                  <CheckBox fx:id="scaleMainCheckbox" mnemonicParsing="false" selected="true" text="Scale temperatures" />
+                  <CheckBox fx:id="exposureMainCheckbox" mnemonicParsing="false" selected="true" text="Exposure" />
+                  <CheckBox fx:id="blurMainCheckbox" mnemonicParsing="false" selected="true" text="Blur" />
+                  <CheckBox fx:id="cannyMainCheckbox" mnemonicParsing="false" selected="true" text="Canny edge" />
+                  <CheckBox fx:id="dilateMainCheckbox" mnemonicParsing="false" selected="true" text="Dilation" />
                </children>
                <padding>
                   <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
@@ -294,7 +263,10 @@
                         <Insets top="5.0" />
                      </VBox.margin>
                   </ImageView>
-                  <ImageView fx:id="originalCroppedImageView" fitHeight="37.0" fitWidth="160.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView fx:id="originalCroppedImageView" fitHeight="38.0" fitWidth="160.0" pickOnBounds="true" preserveRatio="true">
+                     <VBox.margin>
+                        <Insets top="10.0" />
+                     </VBox.margin></ImageView>
                </children>
                <VBox.margin>
                   <Insets />
@@ -303,7 +275,7 @@
                   <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
                </padding>
             </VBox>
-            <AnchorPane prefHeight="588.0" prefWidth="188.0">
+            <AnchorPane prefHeight="241.0" prefWidth="188.0">
                <children>
                   <CheckBox fx:id="saveImagesCheckbox" mnemonicParsing="false" onAction="#saveImagesCheckboxClicked" prefWidth="176.0" text="Save incoming images" AnchorPane.bottomAnchor="0.0" />
                </children>
@@ -322,12 +294,12 @@
                   <Insets />
                </VBox.margin>
             </ImageView>
-            <ImageView fx:id="handImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="goodsImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
                   <Insets top="15.0" />
                </VBox.margin>
             </ImageView>
-            <ImageView fx:id="goodsImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="handImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
                   <Insets top="15.0" />
                </VBox.margin>

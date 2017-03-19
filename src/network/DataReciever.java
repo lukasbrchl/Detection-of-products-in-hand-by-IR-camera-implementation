@@ -32,6 +32,7 @@ public class DataReciever {
 		}
 	}
 	public static final String DUMMY_HOST = "dummy";
+	public static final int DEFAULT_PLAYBACK_SPEED = 33;
 	
 	private final int BUFFER_SIZE = 8192; // or 4096, or more
 	private Socket socket; 
@@ -44,12 +45,14 @@ public class DataReciever {
 	private byte[] latestBuffer;
 	private Status status;
 	private boolean saveImages;
+	private int playbackSpeed;
 	
 	public DataReciever (String hostName, int port, int bytesToRecieve) {
 		this.bytesToRecieve = bytesToRecieve;
 		this.hostName = hostName;
 		this.port = port;
 		this.status = Status.CLOSED;
+		playbackSpeed = DEFAULT_PLAYBACK_SPEED;
 	}
 	
 	public void openConnection() {
@@ -118,7 +121,7 @@ public class DataReciever {
 			if (e instanceof ClosedByInterruptException) throw new ClosedByInterruptException();
 			e.printStackTrace();
 		}
-		Thread.sleep(Integer.parseInt(Config.getInstance().getValue(Config.DUMMY_SLEEP)));				
+		Thread.sleep(playbackSpeed);				
 		return data;
 	}
 	
@@ -160,6 +163,12 @@ public class DataReciever {
 		this.saveImages = saveImages;
 	}
 
-	
+	public int getPlaybackSpeed() {
+		return playbackSpeed;
+	}
+
+	public void setPlaybackSpeed(int playbackSpeed) {
+		this.playbackSpeed = playbackSpeed;
+	}
 	
 }
