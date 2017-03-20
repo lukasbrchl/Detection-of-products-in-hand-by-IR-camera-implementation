@@ -18,6 +18,7 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.Objdetect;
 
 import image.ImageConvertor;
 import image.service.DataRecieverService;
@@ -86,7 +87,7 @@ public class MainController {
 	//Main image settings
 	@FXML private CheckBox scaleMainCheckbox, exposureMainCheckbox, blurMainCheckbox, cannyMainCheckbox, dilateMainCheckbox ;
 
-	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty,  binaryThresholdDoubleProperty, otsuCorrectionDoubleProperty, morphDoubleProperty;  //prevents GC from cleaning weak listeners
+	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty,  binaryThresholdDoubleProperty;  //prevents GC from cleaning weak listeners
 	private DataRecieverService imv;
 	private DataReciever dataReciever;
 
@@ -246,8 +247,6 @@ public class MainController {
 	@FXML 
 	protected void blurCheckboxClicked(ActionEvent event) {
 	}
-		
-
 	
 	//right panel
 	@FXML
@@ -255,8 +254,6 @@ public class MainController {
 		if (saveImagesCheckbox.isSelected()) dataReciever.setSaveImages(true);
 		else dataReciever.setSaveImages(false);
 	}
-	
-	
 	//helper methods
 	
 	//init helpers
@@ -313,8 +310,8 @@ public class MainController {
 		if (size1 % 2 == 0) ++size1;		
 		if (size2 % 2 == 0) ++size2;
 		Mat resultMat = mat.clone();
-		Imgproc.GaussianBlur(mat, resultMat, new Size(size1, size2), sigma);
-//		Imgproc.bilateralFilter(mat, resultMat, blurSigmaSpinner.getValue().intValue(), blur1Spinner.getValue(), blur2Spinner.getValue());
+//		Imgproc.GaussianBlur(mat, resultMat, new Size(size1, size2), sigma);
+		Imgproc.bilateralFilter(mat, resultMat, (int) sigma, size1, size2);
 		return resultMat;
 	}
 	private Mat binaryTreshold(Mat mat, double threshold) {

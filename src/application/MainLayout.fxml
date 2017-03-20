@@ -80,8 +80,8 @@
                         </Label>
                         <AnchorPane fx:id="minTempPane" prefHeight="22.0" prefWidth="195.0">
                            <children>
-                              <Slider fx:id="minTempSlider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
-              				  <Spinner fx:id="minTempSpinner" amountToStepBy="1" editable="true" initialValue="28" max="50.0" min="10.0" minHeight="-Infinity" minWidth="-Infinity" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />
+                              <Slider fx:id="minTempSlider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="130.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
+              				  <Spinner fx:id="minTempSpinner" amountToStepBy="1" editable="true" initialValue="28" max="50.0" min="10.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />
                            </children>
                         </AnchorPane>
                      </children>
@@ -98,8 +98,8 @@
                         </Label>
                         <AnchorPane fx:id="maxTempPane" prefHeight="22.0" prefWidth="195.0">
                            <children>
-                              <Slider fx:id="maxTempSlider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
-                              <Spinner fx:id="maxTempSpinner" amountToStepBy="1" editable="true" initialValue="34.5" max="50" min="10.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />                              
+                              <Slider fx:id="maxTempSlider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="130.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
+                              <Spinner fx:id="maxTempSpinner" amountToStepBy="1" editable="true" initialValue="34.5" max="50" min="10.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />                              
                            </children>
                         </AnchorPane>
                      </children>
@@ -120,16 +120,16 @@
                   <HBox prefHeight="18.0" prefWidth="238.0">
                      <children>
                         <Label text="Clache" />
-                        <Spinner fx:id="clache1Spinner" amountToStepBy="1" editable="true" initialValue="10.0" max="50.0" min="-10.0" prefWidth="60.0" />
-                        <Spinner fx:id="clache2Spinner" amountToStepBy="1" editable="true" initialValue="10.0" max="50.0" min="-10" prefWidth="60.0" />
-                        <Spinner fx:id="clacheClipSpinner" amountToStepBy="1" initialValue="3.0" max="50.0" min="-10.0" editable="true" prefHeight="25.0" prefWidth="64.0" />
+                        <Spinner fx:id="clache1Spinner" amountToStepBy="1" editable="true" initialValue="10.0" max="50.0" min="-10.0" prefWidth="75.0" />
+                        <Spinner fx:id="clache2Spinner" amountToStepBy="1" editable="true" initialValue="10.0" max="50.0" min="-10" prefWidth="75.0" />
+                        <Spinner fx:id="clacheClipSpinner" amountToStepBy="1" editable="true" initialValue="3.0" max="50.0" min="-10.0" prefWidth="75.0" />
                      </children>
                   </HBox>
                   <HBox prefHeight="18.0" prefWidth="238.0">
                      <children>
                         <Label text="Brigthness" />
-                        <Spinner fx:id="brightnessSpinner" amountToStepBy="0.1" editable="true" initialValue="0" max="10.0" min="-10.0" prefWidth="60.0" />
-                        <Spinner fx:id="addSpinner" amountToStepBy="10" editable="true" initialValue="0" max="200.0" min="-200.0" prefWidth="60.0" />
+                        <Spinner fx:id="brightnessSpinner" amountToStepBy="0.1" editable="true" initialValue="0" max="10.0" min="-10.0" prefWidth="75.0" />
+                        <Spinner fx:id="addSpinner" amountToStepBy="10" editable="true" initialValue="0" max="200.0" min="-200.0" prefWidth="75.0" />
                      </children>
                      <VBox.margin>
                         <Insets top="5.0" />
@@ -137,8 +137,8 @@
                   <HBox prefHeight="28.0" prefWidth="238.0">
                      <children>
                         <Label text="Contrast" />
-                        <Spinner fx:id="contrastSpinner" amountToStepBy="10.0" editable="true" initialValue="0" max="100.0" min="-100.0" prefWidth="60.0" />
-                        <Spinner fx:id="multSpinner" amountToStepBy="0.1" editable="true" initialValue="0" max="100" min="-1" prefWidth="60.0" />
+                        <Spinner fx:id="contrastSpinner" amountToStepBy="10.0" editable="true" initialValue="0" max="100.0" min="-100.0" prefWidth="75.0" />
+                        <Spinner fx:id="multSpinner" amountToStepBy="0.1" editable="true" initialValue="0" max="100" min="-1" prefWidth="75.0" />
                      </children>
                      <VBox.margin>
                         <Insets top="5.0" />
@@ -152,10 +152,10 @@
                   <Label alignment="CENTER" prefHeight="17.0" prefWidth="314.0" text="Blur" />
                   <HBox fx:id="blurPane" prefHeight="29.0" prefWidth="238.0">
                      <children>
-                        <CheckBox fx:id="blurCheckbox" mnemonicParsing="true" onAction="#blurCheckboxClicked" selected="true" text="Enable" />
-                        <Spinner fx:id="blur1Spinner" amountToStepBy="1" editable="true" initialValue="10" max="50" min="0.0" prefWidth="60.0" />
-                        <Spinner fx:id="blur2Spinner" amountToStepBy="1" editable="true" initialValue="10" max="50" min="0.0" prefWidth="60.0" />
-                        <Spinner fx:id="blurSigmaSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="60.0" />
+                        <CheckBox fx:id="blurCheckbox" mnemonicParsing="true" onAction="#blurCheckboxClicked" prefWidth="70.0" selected="true" text="Enable" />
+                        <Spinner fx:id="blur1Spinner" amountToStepBy="1" editable="true" initialValue="10" max="250" min="0.0" prefWidth="75.0" />
+                        <Spinner fx:id="blur2Spinner" amountToStepBy="1" editable="true" initialValue="10" max="250" min="0.0" prefWidth="75.0" />
+                        <Spinner fx:id="blurSigmaSpinner" amountToStepBy="1" editable="true" initialValue="3" max="250" min="0.0" prefWidth="75.0" />
                      </children>
                   </HBox>
                   <Separator prefWidth="200.0">
@@ -167,8 +167,8 @@
                   <HBox fx:id="cannyEdgePane" prefHeight="28.0" prefWidth="238.0">
                      <children>
                         <Label text="Canny threshold" />
-                        <Spinner fx:id="cannyEdge1Spinner" amountToStepBy="10" editable="true" initialValue="20" max="250.0" min="0.0" prefWidth="60.0" />
-                        <Spinner fx:id="cannyEdge2Spinner" amountToStepBy="10" editable="true" initialValue="40" max="250.0" min="0.0" prefWidth="60.0" />
+                        <Spinner fx:id="cannyEdge1Spinner" amountToStepBy="10" editable="true" initialValue="20" max="250.0" min="0.0" prefWidth="70.0" />
+                        <Spinner fx:id="cannyEdge2Spinner" amountToStepBy="10" editable="true" initialValue="40" max="250.0" min="0.0" prefWidth="70.0" />
                      </children>
                      <VBox.margin>
                         <Insets top="5.0" />
@@ -177,13 +177,13 @@
                   <HBox prefHeight="17.0" prefWidth="238.0">
                      <children>
                         <Label text="Dilate" />
-                        <Spinner fx:id="dilateSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="60.0" />
+                        <Spinner fx:id="dilateSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="75.0" />
                      </children>
                   </HBox>
                   <HBox prefHeight="17.0" prefWidth="238.0">
                      <children>
                         <Label text="Min contour area" />
-                        <Spinner fx:id="contourMinSizeSpinner" editable="true" initialValue="15" max="150" min="0.0" prefHeight="25.0" prefWidth="64.0" />
+                        <Spinner fx:id="contourMinSizeSpinner" editable="true" initialValue="15" max="150" min="0.0" prefWidth="75.0" />
                         <Label text="Found :" />
                         <Label fx:id="foundContoursLabel" text=" 0" />
                      </children>
@@ -201,7 +201,7 @@
                         <AnchorPane fx:id="binaryThresholdPane" prefHeight="22.0" prefWidth="195.0">
                            <children>
                               <Slider fx:id="binaryThresholdSlider" layoutY="3.0" max="255.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
-                              <Spinner fx:id="binaryThresholdSpinner" amountToStepBy="1" editable="true" initialValue="140" max="255" min="0.0" prefWidth="60.0" AnchorPane.rightAnchor="7.0" />   
+                              <Spinner fx:id="binaryThresholdSpinner" amountToStepBy="1" editable="true" initialValue="140" max="255" min="0.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />   
                            </children>
                         </AnchorPane>
                      </children>
@@ -214,12 +214,6 @@
                         <Insets top="10.0" />
                      </padding>
                   </Separator>
-                  <Label text="Preview image settings" />
-                  <CheckBox fx:id="scaleMainCheckbox" mnemonicParsing="false" selected="true" text="Scale temperatures" />
-                  <CheckBox fx:id="exposureMainCheckbox" mnemonicParsing="false" selected="true" text="Exposure" />
-                  <CheckBox fx:id="blurMainCheckbox" mnemonicParsing="false" selected="true" text="Blur" />
-                  <CheckBox fx:id="cannyMainCheckbox" mnemonicParsing="false" selected="true" text="Canny edge" />
-                  <CheckBox fx:id="dilateMainCheckbox" mnemonicParsing="false" selected="true" text="Dilation" />
                </children>
                <padding>
                   <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
@@ -274,6 +268,19 @@
                <padding>
                   <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
                </padding>
+            </VBox>
+            <VBox prefHeight="95.0" prefWidth="188.0">
+               <padding>
+                  <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
+               </padding>
+               <children>
+                  <Label alignment="CENTER" prefHeight="17.0" prefWidth="227.0" text="Preview image settings" />
+                  <CheckBox fx:id="scaleMainCheckbox" mnemonicParsing="false" selected="true" text="Scale temperatures" />
+                  <CheckBox fx:id="exposureMainCheckbox" mnemonicParsing="false" selected="true" text="Exposure" />
+                  <CheckBox fx:id="blurMainCheckbox" mnemonicParsing="false" selected="true" text="Blur" />
+                  <CheckBox fx:id="cannyMainCheckbox" mnemonicParsing="false" selected="true" text="Canny edge" />
+                  <CheckBox fx:id="dilateMainCheckbox" mnemonicParsing="false" selected="true" text="Dilation" />
+               </children>
             </VBox>
             <AnchorPane prefHeight="241.0" prefWidth="188.0">
                <children>
