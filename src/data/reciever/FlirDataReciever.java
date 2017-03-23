@@ -1,4 +1,4 @@
-package network;
+package data.reciever;
 
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
@@ -15,24 +15,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import data.reciever.domain.Status;
 import utils.Config;
 
-public class FlirDataReciever {
-	public enum Status {
-		CONNECTED("Connected"),
-		STREAMING("Streaming"),
-		PAUSED("Paused"),
-		CLOSED("Closed");
-		private final String strStatus;
-		private Status (String strStatus) {
-			this.strStatus = strStatus;
-		}
-		public String getStrStatus() {
-			return strStatus;
-		}
-	}
-	public static final String DUMMY_HOST = "dummy";
-	public static final int DEFAULT_PLAYBACK_SPEED = 33;
+public class FlirDataReciever extends DataReciever<byte[]> {
 	
 	private final int BUFFER_SIZE = 8192; // or 4096, or more
 	private Socket socket; 
@@ -40,14 +26,10 @@ public class FlirDataReciever {
 	private final int bytesToRecieve; //shouldn't change while recieving
 	private String hostName;
 	private final int port;
-	private List<Path> filesInFolder;
-	private int fakeStreamCounter;
 	private byte[] latestBuffer;
-	private Status status;
-	private boolean saveImages;
-	private int playbackSpeed;
 	
 	public FlirDataReciever (String hostName, int port, int bytesToRecieve) {
+		super();
 		this.bytesToRecieve = bytesToRecieve;
 		this.hostName = hostName;
 		this.port = port;
@@ -57,7 +39,7 @@ public class FlirDataReciever {
 	
 	public void openConnection() {
 		try {
-			if (hostName.equals(DUMMY_HOST)) { //debugging purpose
+			if (isDummy) { //debugging purpose
 				initDummyHost();
 				return;
 			}
@@ -73,7 +55,7 @@ public class FlirDataReciever {
 	//do cleanup
 	public void closeConnection() {
 		status = Status.CLOSED;
-		if (hostName.equals(DUMMY_HOST)) return;
+		if (isDummy) return;
 		try {
 			if (!socket.isClosed())
 				socket.close();
@@ -83,19 +65,8 @@ public class FlirDataReciever {
 			e.printStackTrace();
 		}
 	}
-		
-	public byte[] getImageFromStream() throws ClosedByInterruptException, InterruptedException {
-		if (status.equals(Status.PAUSED)) return latestBuffer;
-		if (hostName.equals(DUMMY_HOST)) 
-			latestBuffer = getImageFromDummyStream();
-		else {
-			latestBuffer = getImageFromSocketStream();	
-			if (saveImages) saveBinaryData();
-		}
-		return latestBuffer;
-	}
 	
-	private byte[] getImageFromSocketStream() {
+	protected byte[] getImageFromStream() {
 		byte [] file = new byte [bytesToRecieve];	
 		byte [] buffer = new byte[BUFFER_SIZE]; 
 		int readCount, bytesWritten = 0;
@@ -112,7 +83,7 @@ public class FlirDataReciever {
 		return file;
 	}
 	
-	private byte[] getImageFromDummyStream() throws InterruptedException, ClosedByInterruptException {		
+	protected byte[] getImageFromDummyStream() throws InterruptedException, ClosedByInterruptException {		
 		if (fakeStreamCounter >= filesInFolder.size()) fakeStreamCounter = 0;		
 		byte[] data = null;
 		try {
@@ -125,7 +96,7 @@ public class FlirDataReciever {
 		return data;
 	}
 	
-	private void saveBinaryData() {
+	protected boolean saveImage() {
 		try {
 			String filename = new SimpleDateFormat("MM_dd_HH_mm_ss_SSS").format(new Date());
 			DataOutputStream os = new DataOutputStream(new FileOutputStream(Config.getInstance().getValue(Config.FLIR_IMAGE_SAVE)+ filename + ".bin"));		 
@@ -133,42 +104,20 @@ public class FlirDataReciever {
 			os.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+			return false;
 		}		 
+		return true;
 	}
 
-	private void initDummyHost() {
+	protected void initDummyHost() {
 		try {
-			hostName = DUMMY_HOST;
-			filesInFolder = Files.walk(Paths.get(Config.getInstance().getValue(Config.DUMMY_PATH).toString())).filter(Files::isRegularFile).collect(Collectors.toList());
+			isDummy = true;
+			filesInFolder = Files.walk(Paths.get(Config.getInstance().getValue(Config.FLIR_DUMMY_PATH).toString())).filter(Files::isRegularFile).collect(Collectors.toList());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		fakeStreamCounter = 0;
 		setStatus(Status.CONNECTED);
-	}
-
-	public Status getStatus() {
-		return status;
-	}
-
-	public void setStatus(Status status) {
-		this.status = status;
-	}
-
-	public boolean isSaveImages() {
-		return saveImages;
-	}
-
-	public void setSaveImages(boolean saveImages) {
-		this.saveImages = saveImages;
-	}
-
-	public int getPlaybackSpeed() {
-		return playbackSpeed;
-	}
-
-	public void setPlaybackSpeed(int playbackSpeed) {
-		this.playbackSpeed = playbackSpeed;
 	}
 	
 }

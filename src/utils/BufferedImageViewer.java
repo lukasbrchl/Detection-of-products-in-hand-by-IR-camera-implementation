@@ -1,4 +1,4 @@
-package image;
+package utils;
 
 import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
@@ -7,12 +7,12 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
-public class ImageViewer {
+public class BufferedImageViewer {
 	private JFrame frame;
 	private JLabel lbl;
 	private ImageIcon icon;
 	
-	public ImageViewer() {
+	public BufferedImageViewer() {
 //		init();
 	}
 	

@@ -1,4 +1,4 @@
-package network.domain;
+package data.reciever.domain;
 
 public class ImageData {
 	
