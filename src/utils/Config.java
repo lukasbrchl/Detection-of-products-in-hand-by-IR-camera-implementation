@@ -13,7 +13,8 @@ public class Config {
    public static final String SOCKET_HOSTNAME = "socket.hostname";
    public static final String SOCKET_PORT = "socket.port";
    public static final String DUMMY_PATH = "image.dummy.path";
-   public static final String IMAGE_SAVE = "image.save.path";
+   public static final String FLIR_IMAGE_SAVE = "image.save.path.termo";
+   public static final String WEBCAM_IMAGE_SAVE = "image.save.path.webcam";
    public static final String DUMMY_SLEEP = "image.dummy.playback.sleep";
    
    private static final String CONFIG_PATH = "conf/config.properties";

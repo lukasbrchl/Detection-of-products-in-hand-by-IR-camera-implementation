@@ -98,7 +98,10 @@ public class ImageConvertor {
 		WritableImage image = new WritableImage(m.width(), m.height());
 		byte [] data = new byte[m.cols() * m.rows() * 3]; // * 3 because Image needs 3 bytes per pixel even if grayscale
 		Mat rgbMat = new Mat();  
-		Imgproc.cvtColor(m, rgbMat, Imgproc.COLOR_GRAY2RGB); //TODO: inefficient, but is there other way? SwingFXUtils.toFXImage = slow
+		if (m.channels() > 2)
+			rgbMat = m;
+		else 
+			Imgproc.cvtColor(m, rgbMat, Imgproc.COLOR_GRAY2RGB); //TODO: inefficient, but is there other way? SwingFXUtils.toFXImage = slow
 		rgbMat.get(0, 0, data);
 	    image.getPixelWriter().setPixels(0, 0, m.width(), m.height(), PixelFormat.getByteRgbInstance(), data, 0, m.width()*3); 
  	    return image;

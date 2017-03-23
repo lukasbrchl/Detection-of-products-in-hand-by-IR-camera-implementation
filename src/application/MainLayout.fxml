@@ -153,9 +153,9 @@
                   <HBox fx:id="blurPane" prefHeight="29.0" prefWidth="238.0">
                      <children>
                         <CheckBox fx:id="blurCheckbox" mnemonicParsing="true" onAction="#blurCheckboxClicked" prefWidth="70.0" selected="true" text="Enable" />
-                        <Spinner fx:id="blur1Spinner" amountToStepBy="1" editable="true" initialValue="10" max="250" min="0.0" prefWidth="75.0" />
-                        <Spinner fx:id="blur2Spinner" amountToStepBy="1" editable="true" initialValue="10" max="250" min="0.0" prefWidth="75.0" />
-                        <Spinner fx:id="blurSigmaSpinner" amountToStepBy="1" editable="true" initialValue="3" max="250" min="0.0" prefWidth="75.0" />
+                        <Spinner fx:id="blur1Spinner" amountToStepBy="1" editable="true" initialValue="100" max="250" min="0.0" prefWidth="75.0" />
+                        <Spinner fx:id="blur2Spinner" amountToStepBy="1" editable="true" initialValue="100" max="250" min="0.0" prefWidth="75.0" />
+                        <Spinner fx:id="blurSigmaSpinner" amountToStepBy="1" editable="true" initialValue="10" max="250" min="0.0" prefWidth="75.0" />
                      </children>
                   </HBox>
                   <Separator prefWidth="200.0">
@@ -296,11 +296,16 @@
    <center>
       <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <ImageView fx:id="mainImageView" fitHeight="512.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
-               <VBox.margin>
-                  <Insets />
-               </VBox.margin>
-            </ImageView>
+            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <ImageView fx:id="mainImageView" fitHeight="256.0" fitWidth="320.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView fx:id="webcamImageView" fitHeight="256.0" fitWidth="320.0" pickOnBounds="true" preserveRatio="true">
+                     <HBox.margin>
+                        <Insets left="20.0" />
+                     </HBox.margin>
+                  </ImageView>
+               </children>
+            </HBox>
             <ImageView fx:id="goodsImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
                   <Insets top="15.0" />

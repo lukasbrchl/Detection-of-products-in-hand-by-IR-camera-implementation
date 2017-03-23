@@ -13,15 +13,15 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
-import network.DataReciever;
+import network.FlirDataReciever;
 import network.domain.ImageData;
 import utils.Utils;
 
-public class DataRecieverService extends Service<ImageData> {
+public class FlirDataService extends Service<ImageData> {
 	
-	private final DataReciever dataReciever;
+	private final FlirDataReciever dataReciever;
 
-	public DataRecieverService(DataReciever dataReciever) {
+	public FlirDataService(FlirDataReciever dataReciever) {
 		this.dataReciever = dataReciever;
 	}
 	

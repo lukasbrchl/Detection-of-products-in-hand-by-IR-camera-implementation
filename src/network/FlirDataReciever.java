@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import utils.Config;
 
-public class DataReciever {
+public class FlirDataReciever {
 	public enum Status {
 		CONNECTED("Connected"),
 		STREAMING("Streaming"),
@@ -47,7 +47,7 @@ public class DataReciever {
 	private boolean saveImages;
 	private int playbackSpeed;
 	
-	public DataReciever (String hostName, int port, int bytesToRecieve) {
+	public FlirDataReciever (String hostName, int port, int bytesToRecieve) {
 		this.bytesToRecieve = bytesToRecieve;
 		this.hostName = hostName;
 		this.port = port;
@@ -128,7 +128,7 @@ public class DataReciever {
 	private void saveBinaryData() {
 		try {
 			String filename = new SimpleDateFormat("MM_dd_HH_mm_ss_SSS").format(new Date());
-			DataOutputStream os = new DataOutputStream(new FileOutputStream(Config.getInstance().getValue(Config.IMAGE_SAVE)+ filename + ".bin"));		 
+			DataOutputStream os = new DataOutputStream(new FileOutputStream(Config.getInstance().getValue(Config.FLIR_IMAGE_SAVE)+ filename + ".bin"));		 
 			os.write(latestBuffer, 0, bytesToRecieve);
 			os.close();
 		} catch (IOException e) {

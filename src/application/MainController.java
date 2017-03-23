@@ -21,7 +21,8 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.Objdetect;
 
 import image.ImageConvertor;
-import image.service.DataRecieverService;
+import image.service.FlirDataService;
+import image.service.WebcamService;
 import javafx.beans.property.DoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -34,8 +35,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
-import network.DataReciever;
-import network.DataReciever.Status;
+import network.FlirDataReciever;
+import network.WebcamDataReciever;
+import network.FlirDataReciever.Status;
 import utils.Config;
 import utils.Utils;
 
@@ -54,7 +56,7 @@ public class MainController {
 
 
 	//Image containers
-	@FXML private ImageView mainImageView, handImageView, goodsImageView, originalImageView, histogramImageView, originalCroppedImageView;
+	@FXML private ImageView mainImageView, webcamImageView, handImageView, goodsImageView, originalImageView, histogramImageView, originalCroppedImageView;
 	//Stream buttons
 	@FXML private Button connectToStreamButton, readStreamButton, closeStreamButton, pauseStreamButton;
 	@FXML private AnchorPane openPausePane;
@@ -88,37 +90,40 @@ public class MainController {
 	@FXML private CheckBox scaleMainCheckbox, exposureMainCheckbox, blurMainCheckbox, cannyMainCheckbox, dilateMainCheckbox ;
 
 	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty,  binaryThresholdDoubleProperty;  //prevents GC from cleaning weak listeners
-	private DataRecieverService imv;
-	private DataReciever dataReciever;
+	private FlirDataService fds;
+	private FlirDataReciever flirDataReciever;
+	private WebcamService wcs;
+	private WebcamDataReciever webcamReciever;
 
 	public MainController() {
-		dataReciever = new DataReciever(Config.getInstance().getValue(Config.SOCKET_HOSTNAME), Integer.parseInt(Config.getInstance().getValue(Config.SOCKET_PORT)), 655360);
+		flirDataReciever = new FlirDataReciever(Config.getInstance().getValue(Config.SOCKET_HOSTNAME), Integer.parseInt(Config.getInstance().getValue(Config.SOCKET_PORT)), 655360);
+		webcamReciever = new WebcamDataReciever();
 	}
 	
 	 @FXML 
 	 public void initialize() {
 		 bindSpinnersToSliders();
 		 playbackSpeedSpinner.valueProperty().addListener((obs, oldValue, newValue) -> { 
-			 dataReciever.setPlaybackSpeed(newValue.intValue());
+			 flirDataReciever.setPlaybackSpeed(newValue.intValue());
 		 });
     }
 	 
 	//buttons
 	@FXML 
 	protected void connectToStream(ActionEvent event) {
-		dataReciever.openConnection();		
-		streamStatusLabel.setText(dataReciever.getStatus().getStrStatus());
+		flirDataReciever.openConnection();		
+		streamStatusLabel.setText(flirDataReciever.getStatus().getStrStatus());
 		toggleOpenPause();	
 	}
 	
 	@FXML
 	protected void readStream(ActionEvent event) throws IOException {
-		dataReciever.setStatus(Status.STREAMING);
+		flirDataReciever.setStatus(Status.STREAMING);
 		toggleOpenPause();		
-		if (imv!= null && imv.isRunning()) return;	
+		if (fds!= null && fds.isRunning()) return;	
 		
-		imv = new DataRecieverService(dataReciever);
-		imv.valueProperty().addListener((obs, oldValue, newValue) -> { 
+		fds = new FlirDataService(flirDataReciever);
+		fds.valueProperty().addListener((obs, oldValue, newValue) -> { 
 			byte [] byteArray = newValue.getData();
 			Mat originalMat = createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT),	workMat;
 			Mat originalCroppedMat = new Mat(originalMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT)), workCroppedMat;
@@ -152,10 +157,19 @@ public class MainController {
 			Utils.updateFXControl(histogramImageView.imageProperty(), histogramImage);
 			Utils.updateFXControl(originalCroppedImageView.imageProperty(), originalCroppedImage);
 		});
-		imv.messageProperty().addListener((obs, oldValue, newValue) -> { 
+		fds.messageProperty().addListener((obs, oldValue, newValue) -> { 
 			streamStatusLabel.setText(newValue);
 			});
-		imv.start();		
+		fds.start();
+		
+		wcs = new WebcamService();
+		wcs.valueProperty().addListener((obs, oldValue, newValue) -> { 
+			Mat mainMat = newValue;
+			Image mainImage = ImageConvertor.convertMatToImage(mainMat);
+			Utils.updateFXControl(webcamImageView.imageProperty(), mainImage);
+			
+		});
+		wcs.start();
 	}
 
 	
@@ -217,15 +231,15 @@ public class MainController {
 
 	@FXML
 	private void closeStream(ActionEvent event) {		
-		dataReciever.closeConnection();
-		imv.cancel();
+		flirDataReciever.closeConnection();
+		fds.cancel();
 		toggleOpenPause();
 	}
 	
 	
 	@FXML
 	protected void pauseStream(ActionEvent event) {
-		dataReciever.setStatus(Status.PAUSED);
+		flirDataReciever.setStatus(Status.PAUSED);
 		toggleOpenPause();
 	}
 
@@ -251,8 +265,14 @@ public class MainController {
 	//right panel
 	@FXML
 	protected void saveImagesCheckboxClicked(ActionEvent event) {
-		if (saveImagesCheckbox.isSelected()) dataReciever.setSaveImages(true);
-		else dataReciever.setSaveImages(false);
+		if (saveImagesCheckbox.isSelected())  {
+			flirDataReciever.setSaveImages(true);
+			wcs.setSaveImages(true); //FIXME: NPE
+		}
+		else {
+			flirDataReciever.setSaveImages(false);
+			wcs.setSaveImages(false);
+		}
 	}
 	//helper methods
 	
@@ -461,19 +481,19 @@ public class MainController {
 	
 	//other helpers
 	private void toggleOpenPause() {
-		if (dataReciever.getStatus().equals(Status.PAUSED)) {
+		if (flirDataReciever.getStatus().equals(Status.PAUSED)) {
 			connectToStreamButton.setVisible(false);
 			readStreamButton.setVisible(true);
 			pauseStreamButton.setVisible(false);
-		} else if (dataReciever.getStatus().equals(Status.CONNECTED)){
+		} else if (flirDataReciever.getStatus().equals(Status.CONNECTED)){
 			connectToStreamButton.setVisible(false);
 			readStreamButton.setVisible(true);
 			pauseStreamButton.setVisible(false);
-		} else if (dataReciever.getStatus().equals(Status.CLOSED)){
+		} else if (flirDataReciever.getStatus().equals(Status.CLOSED)){
 			connectToStreamButton.setVisible(true);
 			readStreamButton.setVisible(false);
 			pauseStreamButton.setVisible(false);
-		} else if (dataReciever.getStatus().equals(Status.STREAMING)){
+		} else if (flirDataReciever.getStatus().equals(Status.STREAMING)){
 			connectToStreamButton.setVisible(false);
 			readStreamButton.setVisible(false);
 			pauseStreamButton.setVisible(true);
