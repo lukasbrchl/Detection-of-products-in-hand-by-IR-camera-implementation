@@ -81,7 +81,7 @@
                         <AnchorPane fx:id="minTempPane" prefHeight="22.0" prefWidth="195.0">
                            <children>
                               <Slider fx:id="minTempSlider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="130.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
-              				  <Spinner fx:id="minTempSpinner" amountToStepBy="1" editable="true" initialValue="28" max="50.0" min="10.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />
+              				  <Spinner fx:id="minTempSpinner" amountToStepBy="0.2" editable="true" initialValue="28" max="50.0" min="10.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />
                            </children>
                         </AnchorPane>
                      </children>
@@ -99,7 +99,7 @@
                         <AnchorPane fx:id="maxTempPane" prefHeight="22.0" prefWidth="195.0">
                            <children>
                               <Slider fx:id="maxTempSlider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="130.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
-                              <Spinner fx:id="maxTempSpinner" amountToStepBy="1" editable="true" initialValue="34.5" max="50" min="10.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />                              
+                              <Spinner fx:id="maxTempSpinner" amountToStepBy="0.2" editable="true" initialValue="34.5" max="50" min="10.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />                              
                            </children>
                         </AnchorPane>
                      </children>
@@ -178,6 +178,16 @@
                      <children>
                         <Label text="Dilate" />
                         <Spinner fx:id="dilateSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="75.0" />
+                        <Label text="Erode" />
+                        <Spinner fx:id="erodeSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="75.0" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="26.0" prefWidth="238.0">
+                     <children>
+                        <CheckBox fx:id="morphOpenCheckbox" mnemonicParsing="false" text="Open" />
+                        <CheckBox fx:id="morphCloseCheckbox" mnemonicParsing="false" text="Close" />
+                        <Label text="Iterations" />
+                        <Spinner fx:id="morphIterSpinner" amountToStepBy="1" editable="true" initialValue="1" max="50" min="0.0" prefHeight="25.0" prefWidth="73.0" />
                      </children>
                   </HBox>
                   <HBox prefHeight="17.0" prefWidth="238.0">
@@ -200,8 +210,8 @@
                         <Label text="Threshold" />
                         <AnchorPane fx:id="binaryThresholdPane" prefHeight="22.0" prefWidth="195.0">
                            <children>
-                              <Slider fx:id="binaryThresholdSlider" layoutY="3.0" max="255.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
-                              <Spinner fx:id="binaryThresholdSpinner" amountToStepBy="1" editable="true" initialValue="140" max="255" min="0.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />   
+                              <Slider fx:id="handThresholdSlider" layoutY="3.0" max="255.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
+                              <Spinner fx:id="handThresholdSpinner" amountToStepBy="1" editable="true" initialValue="140" max="255" min="-127.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />   
                            </children>
                         </AnchorPane>
                      </children>
@@ -209,11 +219,22 @@
                         <Insets bottom="7.0" left="7.0" right="7.0" />
                      </padding>
                   </VBox>
+                  <HBox prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <Label text="Dilation" />
+                        <Spinner fx:id="handDilationSpinner" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" prefHeight="25.0" prefWidth="59.0" />
+                        <Label text="Iterations" />
+                        <Spinner fx:id="handIterSpinner" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" prefHeight="25.0" prefWidth="63.0" />
+                     </children>
+                  </HBox>
                   <Separator prefWidth="200.0">
                      <padding>
                         <Insets top="10.0" />
                      </padding>
                   </Separator>
+                  <Spinner fx:id="optionalSpinner3" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" />
+                  <Spinner fx:id="optionalSpinner4" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" />
+                  <Spinner fx:id="optionalSpinner5" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" />
                </children>
                <padding>
                   <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
@@ -274,12 +295,14 @@
                   <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
                </padding>
                <children>
-                  <Label alignment="CENTER" prefHeight="17.0" prefWidth="227.0" text="Preview image settings" />
-                  <CheckBox fx:id="scaleMainCheckbox" mnemonicParsing="false" selected="true" text="Scale temperatures" />
+                  <Label alignment="CENTER" prefHeight="17.0" prefWidth="227.0" text="Thermal preview image" />
                   <CheckBox fx:id="exposureMainCheckbox" mnemonicParsing="false" selected="true" text="Exposure" />
                   <CheckBox fx:id="blurMainCheckbox" mnemonicParsing="false" selected="true" text="Blur" />
                   <CheckBox fx:id="cannyMainCheckbox" mnemonicParsing="false" selected="true" text="Canny edge" />
-                  <CheckBox fx:id="dilateMainCheckbox" mnemonicParsing="false" selected="true" text="Dilation" />
+                  <CheckBox fx:id="morphologyMainCheckbox" mnemonicParsing="false" selected="true" text="Morphology" />
+                  <CheckBox fx:id="hullHandGoodsMainCheckbox" mnemonicParsing="false" text="Hull hand with goods" />
+                  <CheckBox fx:id="hullGoodsMainCheckbox" mnemonicParsing="false" selected="true" text="Hull goods" />
+                  <CheckBox fx:id="roiMainCheckbox" mnemonicParsing="false" selected="true" text="Region of interest" />
                </children>
             </VBox>
             <AnchorPane prefHeight="241.0" prefWidth="188.0">
@@ -298,24 +321,20 @@
          <children>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <ImageView fx:id="mainImageView" fitHeight="256.0" fitWidth="320.0" pickOnBounds="true" preserveRatio="true" />
-                  <ImageView fx:id="webcamImageView" fitHeight="256.0" fitWidth="320.0" pickOnBounds="true" preserveRatio="true">
-                     <HBox.margin>
-                        <Insets left="20.0" />
-                     </HBox.margin>
-                  </ImageView>
+                  <ImageView fx:id="mainImageView" fitHeight="512.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" />
                </children>
             </HBox>
-            <ImageView fx:id="goodsImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="goodsImageView" fitHeight="200.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
                   <Insets top="15.0" />
                </VBox.margin>
             </ImageView>
-            <ImageView fx:id="handImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="handImageView" fitHeight="200.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
                   <Insets top="15.0" />
                </VBox.margin>
             </ImageView>
+            <ImageView fx:id="webcamImageView" fitHeight="12.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" />
          </children>
          <BorderPane.margin>
             <Insets bottom="14.0" top="14.0" />

@@ -28,13 +28,13 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 	private final int port;
 	private byte[] latestBuffer;
 	
-	public FlirDataReciever (String hostName, int port, int bytesToRecieve) {
+	public FlirDataReciever (String hostName, int port, int bytesToRecieve, int playbackSpeed) {
 		super();
 		this.bytesToRecieve = bytesToRecieve;
 		this.hostName = hostName;
 		this.port = port;
 		this.status = Status.CLOSED;
-		playbackSpeed = DEFAULT_PLAYBACK_SPEED;
+		this.playbackSpeed = playbackSpeed;
 	}
 	
 	public void openConnection() {

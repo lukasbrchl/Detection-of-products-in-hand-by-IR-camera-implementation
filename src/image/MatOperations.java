@@ -14,9 +14,28 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
+
+import utils.ImageConvertor;
 
 public class MatOperations {
+	
+	public static Mat createMat(byte [] byteArray, int width, int height, boolean scale, float min, float max, float interval) {		
+		Mat mat;
+		if (scale) mat = ImageConvertor.convertBinaryToMat(byteArray, width, height, min, max);
+		else if (interval > 0) mat = ImageConvertor.convertBinaryToMat(byteArray, width, height, interval);
+		else mat = ImageConvertor.convertBinaryToMat(byteArray, width, height);
+		return mat;
+	}
+	
+	public static Mat clache(Mat mat, double value1, double value2, double value3) {
+		Mat result = new Mat(mat.size(), mat.type()); 
+		CLAHE clahe = Imgproc.createCLAHE(value3, new Size(value1, value2));
+		clahe.apply(mat, result);
+		return result;
+	}
 	
 	public static Mat brightnessContrast(Mat mat, double brightness, double contrast) { //CLAHE http://docs.opencv.org/trunk/d5/daf/tutorial_py_histogram_equalization.html
 		mat.convertTo(mat, -1, brightness + 1, -contrast);
@@ -32,9 +51,15 @@ public class MatOperations {
 	public static Mat blurImage(Mat mat, double size1, double size2, double sigma) {
 		if (size1 % 2 == 0) ++size1;		
 		if (size2 % 2 == 0) ++size2;
-		Mat resultMat = mat.clone();
+		Mat resultMat = new Mat();
+		Mat medianMat = new Mat();
+		
+		
 //		Imgproc.GaussianBlur(mat, resultMat, new Size(size1, size2), sigma);
-		Imgproc.bilateralFilter(mat, resultMat, (int) sigma, size1, size2);
+		Imgproc.medianBlur(mat, medianMat,7);
+		Imgproc.GaussianBlur(medianMat, resultMat, new Size(size1, size2), sigma);
+
+//		Imgproc.bilateralFilter(medianMat, resultMat, (int) sigma, size1, size2);
 		return resultMat;
 	}
 	
@@ -51,12 +76,9 @@ public class MatOperations {
 	}	
 	
 	public static Mat doCannyEdgeDetection(Mat mat, double thresh1, double thresh2) { //todo 2 params
-		Mat detectedEdges = new Mat();		
-		Imgproc.Canny(mat, mat, thresh1, thresh2);
-		Mat dest = new Mat();
-		mat.copyTo(dest, detectedEdges);
-		
-		return dest;
+		Mat result = new Mat();		
+		Imgproc.Canny(mat, result, thresh1, thresh2);
+		return result;
 	}
 	
 	public static List<MatOfPoint> findContours(Mat mat, double minSize) {
@@ -68,7 +90,6 @@ public class MatOperations {
         	double countourArea = Imgproc.contourArea(allContours.get(i));	      
 	        if (countourArea > minSize) filteredContours.add(allContours.get(i));	      
 		}        
-//        foundContoursLabel.setText(" " + Integer.toString(filteredContours.size()));
         return filteredContours;
 	}
 	
@@ -93,11 +114,14 @@ public class MatOperations {
 		return contourImg;	
 	}
 	
-	public static Mat convexHull(Mat mat, List <MatOfPoint> contours) {
+	public static Mat convexHull(Mat mat, Mat drawOn, List <MatOfPoint> contours, boolean fill) {
 		Mat contoursMat = drawContours(contours, mat.width(), mat.height());
         MatOfPoint points = new MatOfPoint();
         MatOfInt hullTemp = new MatOfInt();
-		Mat result = new Mat(mat.height(), mat.width(), CvType.CV_8U, new Scalar(0,0,0));        
+        Mat result;
+        if (drawOn == null) result = new Mat(mat.height(), mat.width(), CvType.CV_8U, new Scalar(0,0,0));    
+        else result = drawOn.clone();
+        
         Core.findNonZero(contoursMat, points);   
         if (points == null || points.empty()) return mat;        
 		
@@ -117,14 +141,9 @@ public class MatOperations {
         
         List<MatOfPoint> cnl = new ArrayList<>();
         cnl.add(mopOut);
-        Imgproc.drawContours(result, cnl, -1, Scalar.all(255), Core.FILLED);        
+        int thickness =  fill ? Core.FILLED : 3;
+        Imgproc.drawContours(result, cnl, -1, Scalar.all(255), thickness);        
         return result;
-	}
-	
-	public static Mat maskMat(Mat matToMask, Mat mask) {
-		Mat result = new Mat(matToMask.size(), matToMask.type(), new Scalar(0,0,0)); 
-		matToMask.copyTo(result, mask);
-		return result;
 	}
 	
 	public static Mat aproxCurve(Mat mat, List <MatOfPoint> contours) { //TODO: contains bugs
@@ -152,6 +171,25 @@ public class MatOperations {
         Imgproc.drawContours(result, cnl, -1, Scalar.all(255), Core.FILLED);   
         return result;
 	}	
+
+    public static Point getMassCenter(MatOfPoint mop, Mat mat) {
+//    	Imgproc.minAreaRect(points)
+        Moments moments = Imgproc.moments(mop);
+
+        Point center = new Point();
+        center.x = moments.get_m10() / moments.get_m00();
+        center.y = moments.get_m01() / moments.get_m00();
+
+        if (center.x >= 0 && center.x <= mat.cols() && center.y >= 0 && center.y <= mat.rows())        	
+        	return center;
+        return new Point(0,0);
+    }
+	
+	public static Mat maskMat(Mat matToMask, Mat mask) {
+		Mat result = new Mat(matToMask.size(), matToMask.type(), new Scalar(0,0,0)); 
+		matToMask.copyTo(result, mask);
+		return result;
+	}
 	
 	public static Mat invert(Mat mat) {
 		Mat result = new Mat(mat.size(), mat.type());
@@ -160,16 +198,32 @@ public class MatOperations {
         return result;
 	}
 	
-	public static Mat dilate(Mat mat, double dSize) {
+	public static Mat morphology(Mat mat, boolean open, boolean close, double erodeValue, double dilateValue, double iterations) {
 		Mat result = new Mat(mat.size(), mat.type());
-		int size = (int) dSize;
-		if (size % 2 == 0) ++size;
-	    Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(size,size));
-	    Imgproc.dilate(mat, result, element);
+//	    Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(erodeValue,erodeValue));
+	    Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(dilateValue,dilateValue));
+		if (!close) {
+		    Imgproc.morphologyEx(mat, result, Imgproc.MORPH_OPEN, dilateElement, new Point(dilateValue/2, dilateValue/2), (int) iterations);
+//			result = MatOperations.erode(mat, erodeValue);
+//			result = MatOperations.dilate(result, dilateValue);
+		} else {
+		    Imgproc.morphologyEx(mat, result, Imgproc.MORPH_CLOSE, dilateElement, new Point(dilateValue/2, dilateValue/2), (int) iterations);
+//			result = MatOperations.dilate(mat, dilateValue);
+//			result = MatOperations.erode(result, erodeValue);
+		}
+		return result;
+	}
+	
+	public static Mat dilate(Mat mat, double dSize, double iterations) {
+		Mat result = new Mat(mat.size(), mat.type());
+//		int size = (int) dSize;
+//		if (size % 2 == 0) ++size;
+	    Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(dSize,dSize));
+	    Imgproc.dilate(mat, result, element, new Point(dSize/2, dSize/2), (int) iterations);
 	    return result;
 	}
 	
-	public static Mat erode(Mat mat, double dSize) {
+	public static Mat erode(Mat mat, double dSize, int iterations) {
 		Mat result = new Mat(mat.size(), mat.type());
 		int size = (int) dSize;
 		if (size % 2 == 0) ++size;
@@ -190,5 +244,15 @@ public class MatOperations {
 			Imgproc.line(histImage, new Point(bin_w * (i - 1), mat.width() - Math.round(hist.get(i - 1, 0)[0])), new Point(bin_w * (i), mat.height() - Math.round(hist.get(i, 0)[0])), new Scalar(255, 0, 0), 2, 8, 0);			
 		}		
 		return histImage;		
+	}
+	
+	public static Mat drawMinBoundingRect(Mat mat, Point [] points) {
+		Mat result = mat.clone();
+		if (points != null) {
+			for (int i = 0; i < points.length; ++i) {
+				Imgproc.line(result, points[i], points[(i+1)%4], Scalar.all(255), 3);
+			}
+		}
+		return result;
 	}
 }

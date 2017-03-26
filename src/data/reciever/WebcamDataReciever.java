@@ -24,11 +24,11 @@ public class WebcamDataReciever extends DataReciever<Mat>{
 	private VideoCapture camera;
 	private final int cameraId;
 	
-	public WebcamDataReciever(int cameraId) {
+	public WebcamDataReciever(int cameraId, int playbackSpeed) {
 		super();
 		this.cameraId = cameraId;
 		this.status = Status.CLOSED;
-		playbackSpeed = DEFAULT_PLAYBACK_SPEED;
+		this.playbackSpeed = playbackSpeed;
 	}
 
 	public void openConnection() {

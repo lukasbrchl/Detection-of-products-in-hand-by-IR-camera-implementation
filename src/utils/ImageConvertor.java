@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -17,6 +18,7 @@ import org.opencv.imgproc.Imgproc;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.image.WritablePixelFormat;
 
 
 public class ImageConvertor {
@@ -26,6 +28,18 @@ public class ImageConvertor {
 		float max = bytesToCelsius(getMax(byteArray));
 		return convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, min, max);
 	}
+	
+	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight, float interval) {
+		float origMin = bytesToCelsius(getMin(byteArray));
+		float origMax = bytesToCelsius(getMax(byteArray));
+		float avg = (origMin + origMax)/2 - 3.5f;
+		float min = avg - interval/2;
+		float max = avg + interval/2;
+		if (origMax - origMin < 5)
+			return convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight);
+		return convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, min, max);
+	}
+	
 	
 	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
 		try {
@@ -76,6 +90,13 @@ public class ImageConvertor {
 		Mat mat = new Mat(imageHeight, imageWidth, CvType.CV_8U);
 		mat.put(0, 0, pixels);
 		return mat;
+	}	
+	
+	public static Mat convertBinaryToMat(byte[] byteArray, int imageWidth, int imageHeight, float interval) {
+		byte [] pixels = ((DataBufferByte) convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, interval).getRaster().getDataBuffer()).getData();			
+		Mat mat = new Mat( imageHeight, imageWidth, CvType.CV_8U);
+		mat.put(0, 0, pixels);
+		return mat;
 	}
 	
 	public static Mat convertBinaryToMat(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
@@ -108,20 +129,20 @@ public class ImageConvertor {
 	 	}
 	
 	 //helper methods
-	private static float bytesToCelsius(int value) {
+	public static float bytesToCelsius(int value) {
 		return ((float) value * 0.04f) - 273.15f; // * 0.04 FLIR Ax5 constant + kelvin to celsius
 	}
 
-	private static int unsignedToSigned(byte a) {
+	public static int unsignedToSigned(byte a) {
 		return a & 0xFF;
 	}
 	
-	private static float normalizeToByte(float value, float min, float max) {
+	public static float normalizeToByte(float value, float min, float max) {
 		float newMin = 0.0f, newMax = 255.0f;
 		return normalize(value, min, max, newMin, newMax);
 	}
 
-	private static float normalize(float value, float min, float max, float newMin, float newMax) {
+	public static float normalize(float value, float min, float max, float newMin, float newMax) {
 		if (value > max) value = max;
 		if (value < min) value = min;
 		float normalized = (newMax - newMin) / (max - min) * (value - max) + newMax;
@@ -129,7 +150,7 @@ public class ImageConvertor {
 	}
 
 	//TODO: inefficient
-	private static int getMax(byte[] inputArray) {
+	public static int getMax(byte[] inputArray) {
 		int maxValue = 0;
 		for (int i = 0; i < inputArray.length; i += 2) {
 			int value = readTwoBytes(inputArray, i);
@@ -138,7 +159,7 @@ public class ImageConvertor {
 		return maxValue;
 	}
 
-	private static int getMin(byte[] inputArray) {
+	public static int getMin(byte[] inputArray) {
 		int minValue = Integer.MAX_VALUE;
 		for (int i = 0; i < inputArray.length; i += 2) {
 			int value = readTwoBytes(inputArray, i);
@@ -146,8 +167,34 @@ public class ImageConvertor {
 		}
 		return minValue;
 	}
+	
+	public static int getAvg(byte [] inputArray) {
+		int counter = 0;
+		int sum = 0;
+		for (int i = 0; i < inputArray.length; i += 2) {
+			sum += readTwoBytes(inputArray, i);
+			++counter;
+		}
+		return sum/counter;
+	}
+	
+	public static int getMedian(byte[] inputArray) {
+		int[] convertedArray = new int[inputArray.length/2];
+		int cnt = 0;
+		for (int i = 0; i < inputArray.length; i += 2) {
+			convertedArray[cnt++] = readTwoBytes(inputArray, i);
+		}
+		Arrays.sort(convertedArray);
+		int middle = convertedArray.length/2;
+		int medianValue = 0; //declare variable 
+		if (convertedArray.length%2 == 1) 
+		    medianValue = convertedArray[middle];
+		else
+		   medianValue = (convertedArray[middle-1] + convertedArray[middle]) / 2;
+		return medianValue;
+	}
 
-	private static int readTwoBytes(byte[] inputArray, int index) {
+	public static int readTwoBytes(byte[] inputArray, int index) {
 		int firstByte = unsignedToSigned(inputArray[index]);
 		int secondByte = unsignedToSigned(inputArray[index + 1]);
 		return (secondByte << 8) | firstByte;
@@ -171,5 +218,4 @@ public class ImageConvertor {
 			e.printStackTrace();
 		}
 	}
-
 }
