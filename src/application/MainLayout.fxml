@@ -329,7 +329,7 @@
                   <Insets top="15.0" />
                </VBox.margin>
             </ImageView>
-            <ImageView fx:id="handImageView" fitHeight="200.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="handImageView" fitHeight="108.0" fitWidth="401.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
                   <Insets top="15.0" />
                </VBox.margin>

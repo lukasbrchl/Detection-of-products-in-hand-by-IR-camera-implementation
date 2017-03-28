@@ -11,8 +11,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import data.reciever.domain.Status;
@@ -55,15 +58,17 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 	//do cleanup
 	public void closeConnection() {
 		status = Status.CLOSED;
-		if (isDummy) return;
-		try {
-			if (!socket.isClosed())
-				socket.close();
-			inputStream.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (!isDummy) {
+			try {
+				if (socket != null && !socket.isClosed())
+					socket.close();
+				inputStream.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+		isDummy = false;
 	}
 	
 	protected byte[] getImageFromStream() {
@@ -83,6 +88,22 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 		return file;
 	}
 	
+	boolean findIfArrayIsASubset(int[] main, int[] sub) {
+		int count = 0;
+		for (int i = 0; i < main.length; i++) {
+		    for (int j = 0; j < sub.length; j++) {
+		        if (main[i] == sub[j]) {
+		            main[i] = -1;
+		            count++;
+		            break;
+		        }
+		    }
+		}
+		if (count == sub.length)
+			return true;
+		return false;
+	}
+
 	protected byte[] getImageFromDummyStream() throws InterruptedException, ClosedByInterruptException {		
 		if (fakeStreamCounter >= filesInFolder.size()) fakeStreamCounter = 0;		
 		byte[] data = null;
@@ -100,7 +121,7 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 		try {
 			String filename = new SimpleDateFormat("MM_dd_HH_mm_ss_SSS").format(new Date());
 			DataOutputStream os = new DataOutputStream(new FileOutputStream(Config.getInstance().getValue(Config.FLIR_IMAGE_SAVE)+ filename + ".bin"));		 
-			os.write(latestBuffer, 0, bytesToRecieve);
+			os.write(latest, 0, bytesToRecieve);
 			os.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -113,6 +134,8 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 		try {
 			isDummy = true;
 			filesInFolder = Files.walk(Paths.get(Config.getInstance().getValue(Config.FLIR_DUMMY_PATH).toString())).filter(Files::isRegularFile).collect(Collectors.toList());
+//			filesInFolder = Files.walk(Paths.get("D:\\ThesisProjectImages\\3_17_termo3")).filter(Files::isRegularFile).collect(Collectors.toList());			
+//			filesInFolder = Files.walk(Paths.get("D:\\ThesisProjectImages\\3_17_termo2")).filter(Files::isRegularFile).collect(Collectors.toList());			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

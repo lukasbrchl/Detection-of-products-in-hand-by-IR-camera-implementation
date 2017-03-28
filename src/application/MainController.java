@@ -153,10 +153,12 @@ public class MainController {
 //					scaledCroppedMat = MatOperations.createMat(croppedByteArray, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT, true, min, max, -1);
 
 				originalMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, false, minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
+
 				if (scaleTempCheckbox.isSelected())
 					scaledMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, scaleTempCheckbox.isSelected(), minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
 				else 
 					scaledMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, true, origMin , origMax, -1);
+
 				originalCroppedMat = new Mat(originalMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));
 
 				Mat mainMat = processMainMat(scaledMat);			
@@ -179,18 +181,17 @@ public class MainController {
 						Utils.updateFXControl(goodsImageView.imageProperty(), goodsImage);			
 					}
 				}
-//			
 				//center
 				Image mainImage = ImageConvertor.convertMatToImage(mainMat);
-				Image handImage = ImageConvertor.convertMatToImage(handMat);
+//				Image handImage = ImageConvertor.convertMatToImage(handMat);
 				Utils.updateFXControl(mainImageView.imageProperty(), mainImage);
-				Utils.updateFXControl(handImageView.imageProperty(), handImage);
+//				Utils.updateFXControl(handImageView.imageProperty(), handImage);
 //				//panel
 				Image originalImage = ImageConvertor.convertMatToImage(originalMat);
-				Image histogramImage = ImageConvertor.convertMatToImage(MatOperations.createHistogram(workMat));	
+//				Image histogramImage = ImageConvertor.convertMatToImage(MatOperations.createHistogram(workMat));	
 				Image originalCroppedImage = ImageConvertor.convertMatToImage(originalCroppedMat);
 				Utils.updateFXControl(originalImageView.imageProperty(), originalImage);
-				Utils.updateFXControl(histogramImageView.imageProperty(), histogramImage);
+//				Utils.updateFXControl(histogramImageView.imageProperty(), histogramImage);
 				Utils.updateFXControl(originalCroppedImageView.imageProperty(), originalCroppedImage);
 			});
 			fds.messageProperty().addListener((obs, oldValue, newValue) -> { 
@@ -201,9 +202,9 @@ public class MainController {
 		if (wcs == null || !wcs.isRunning()) {
 			wcs = new WebcamService(webcamDataReciever);
 			wcs.valueProperty().addListener((obs, oldValue, newValue) -> { 
-				Mat mainMat = newValue;
-				Image mainImage = ImageConvertor.convertMatToImage(mainMat);
-				Utils.updateFXControl(webcamImageView.imageProperty(), mainImage);
+//				Mat mainMat = newValue;
+//				Image mainImage = ImageConvertor.convertMatToImage(mainMat);
+//				Utils.updateFXControl(webcamImageView.imageProperty(), mainImage);
 				
 			});
 //			wcs.start();
@@ -326,16 +327,17 @@ public class MainController {
 		
 		int cnt=0, counter2 = 0;
 		List <MatOfPoint> mop = MatOperations.findContours(result, contourMinSizeSpinner.getValue());	
+
 		System.out.println("____________________" + "Number of contours:" + mop.size() + "____________________");
 		for (MatOfPoint one : mop) {
 			double area = Imgproc.contourArea(one);
 			double length = Imgproc.arcLength(new MatOfPoint2f(one.toArray()), false);
+
 			boolean isConvex = Imgproc.isContourConvex(one);
 			System.out.println("_______ " + counter2 + " _______");
 			System.out.println("Area: " + area);
 			System.out.println("Length: " + length);
 			System.out.println("Convexity: " + isConvex);
-
 
 			if (length > 30)
 				cnt++;
