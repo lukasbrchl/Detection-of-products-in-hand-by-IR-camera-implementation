@@ -38,6 +38,16 @@ public class MatOperations {
 	}
 	
 	public static Mat brightnessContrast(Mat mat, double brightness, double contrast) { //CLAHE http://docs.opencv.org/trunk/d5/daf/tutorial_py_histogram_equalization.html
+        double inverse_gamma = 1.0 / 3;
+
+        Mat lut = new Mat(1, 256, CvType.CV_8UC1);
+        int data;
+        for (int i = 0; i < 256; i++) {
+            data = (int) (Math.pow((double) i / 255.0, inverse_gamma) * 255.0);
+            lut.put(0, i, data);
+        }		
+		Core.LUT(mat, lut, mat);
+		
 		mat.convertTo(mat, -1, brightness + 1, -contrast);
 		return mat;
 	}
@@ -46,6 +56,15 @@ public class MatOperations {
         Core.add(mat, Scalar.all(add), mat);
         Core.multiply(mat, Scalar.all(mult + 1), mat);
 		return mat;
+	}
+	
+	public static Mat gamma(Mat mat, double gamma) {
+        Mat lut = new Mat(1, 256, CvType.CV_8U);
+        int data;
+        for (int i = 0; i < 256; i++)
+           lut.put(0, i, (int) (Math.pow((double) i / 255.0, 1 / gamma) * 255.0));		
+        Core.LUT(mat, lut, mat);
+        return mat;
 	}
 	
 	public static Mat blurImage(Mat mat, double size1, double size2, double sigma) {
@@ -66,6 +85,12 @@ public class MatOperations {
 	public static Mat binaryTreshold(Mat mat, double threshold) {
 		Mat result = new Mat(mat.size(), mat.type());        
 		Imgproc.threshold(mat, result, threshold , 255, Imgproc.THRESH_BINARY);
+//		if ((int) (threshold % 2) == 0) threshold ++;
+//		Imgproc.adaptiveThreCshold(mat, result, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, (int) threshold, 50);
+//		th2 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
+//	            cv2.THRESH_BINARY,11,2)
+//	th3 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+//	            cv2.THRESH_BINARY,11,2)
 		return result;
 	}
 	
@@ -199,27 +224,37 @@ public class MatOperations {
 	}
 	
 	public static Mat morphology(Mat mat, boolean open, boolean close, double erodeValue, double dilateValue, double iterations) {
-		Mat result = new Mat(mat.size(), mat.type());
+		Mat result = mat.clone();
+		if ((int) erodeValue % 2 == 0) erodeValue++;
+		if ((int) dilateValue % 2 == 0) dilateValue++;
+
 //	    Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(erodeValue,erodeValue));
 	    Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(dilateValue,dilateValue));
-		if (!close) {
-		    Imgproc.morphologyEx(mat, result, Imgproc.MORPH_OPEN, dilateElement, new Point(dilateValue/2, dilateValue/2), (int) iterations);
-//			result = MatOperations.erode(mat, erodeValue);
-//			result = MatOperations.dilate(result, dilateValue);
-		} else {
-		    Imgproc.morphologyEx(mat, result, Imgproc.MORPH_CLOSE, dilateElement, new Point(dilateValue/2, dilateValue/2), (int) iterations);
-//			result = MatOperations.dilate(mat, dilateValue);
-//			result = MatOperations.erode(result, erodeValue);
+		for (int i = 0; i < (int) iterations; ++i) {
+		    if (!close) {
+			    Imgproc.morphologyEx(result, result, Imgproc.MORPH_OPEN, dilateElement);
+	//			result = MatOperations.erode(mat, erodeValue);
+	//			result = MatOperations.dilate(result, dilateValue);
+			} else {
+			    Imgproc.morphologyEx(result, result, Imgproc.MORPH_CLOSE, dilateElement);
+	//			result = MatOperations.dilate(mat, dilateValue);
+	//			result = MatOperations.erode(result, erodeValue);
+			}
 		}
 		return result;
 	}
 	
 	public static Mat dilate(Mat mat, double dSize, double iterations) {
-		Mat result = new Mat(mat.size(), mat.type());
-//		int size = (int) dSize;
-//		if (size % 2 == 0) ++size;
-	    Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(dSize,dSize));
-	    Imgproc.dilate(mat, result, element, new Point(dSize/2, dSize/2), (int) iterations);
+//		Mat result = new Mat(mat.size(), mat.type());
+		Mat result = mat.clone();
+
+		int size = (int) dSize;
+		if (size % 2 == 0) ++size;
+	    Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(size,size));
+//	    Imgproc.dilate(mat, result, element, new Point(), (int) iterations);
+	    for (int i = 0; i < (int) iterations; ++i)
+	    	Imgproc.dilate(result, result, element);
+
 	    return result;
 	}
 	
