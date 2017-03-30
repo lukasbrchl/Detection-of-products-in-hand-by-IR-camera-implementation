@@ -150,7 +150,10 @@ public class MatOperations {
         Core.findNonZero(contoursMat, points);   
         if (points == null || points.empty()) return mat;        
 		
-        Imgproc.convexHull(points, hullTemp);		
+        Imgproc.convexHull(points, hullTemp);	
+//		System.out.println(Imgproc.contourArea(hullTemp));
+//        System.out.println(hullTemp.dump());
+
         
         MatOfPoint mopOut = new MatOfPoint();
         mopOut.create((int)hullTemp.size().height,1,CvType.CV_32SC2);
@@ -164,9 +167,12 @@ public class MatOperations {
             mopOut.put(i, 0, point);
         }        
         
+		System.out.println(Imgproc.contourArea(mopOut));
+
+        
         List<MatOfPoint> cnl = new ArrayList<>();
         cnl.add(mopOut);
-        int thickness =  fill ? Core.FILLED : 3;
+        int thickness =  fill ? Core.FILLED : 2;
         Imgproc.drawContours(result, cnl, -1, Scalar.all(255), thickness);        
         return result;
 	}
@@ -290,4 +296,12 @@ public class MatOperations {
 		}
 		return result;
 	}
+	
+	public static void replaceMatArea(Mat mat, Mat small, int offsetX, int offsetY) { 
+		byte [] data = new byte[small.channels()*small.cols()*small.rows()];
+		small.get(0, 0, data);
+		mat.put(offsetY, offsetX, data);		
+	}
+	
+	
 }

@@ -152,7 +152,7 @@
                   <Label alignment="CENTER" prefHeight="17.0" prefWidth="314.0" text="Blur" />
                   <HBox fx:id="blurPane" prefHeight="29.0" prefWidth="238.0">
                      <children>
-                        <CheckBox fx:id="blurCheckbox" mnemonicParsing="true" onAction="#blurCheckboxClicked" prefWidth="70.0" selected="true" text="Enable" />
+                        <CheckBox fx:id="blurCheckbox" mnemonicParsing="true" prefWidth="70.0" selected="true" text="Enable" />
                         <Spinner fx:id="blur1Spinner" amountToStepBy="1" editable="true" initialValue="100" max="250" min="0.0" prefWidth="75.0" />
                         <Spinner fx:id="blur2Spinner" amountToStepBy="1" editable="true" initialValue="100" max="250" min="0.0" prefWidth="75.0" />
                         <Spinner fx:id="blurSigmaSpinner" amountToStepBy="1" editable="true" initialValue="10" max="250" min="0.0" prefWidth="75.0" />

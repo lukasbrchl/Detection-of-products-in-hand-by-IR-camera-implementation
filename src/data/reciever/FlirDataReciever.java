@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +106,9 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 	}
 
 	protected byte[] getImageFromDummyStream() throws InterruptedException, ClosedByInterruptException {		
-		if (fakeStreamCounter >= filesInFolder.size()) fakeStreamCounter = 0;		
+		if (fakeStreamCounter >= filesInFolder.size()) fakeStreamCounter = 0;
+//		if (fakeStreamCounter >= filesInFolder.size()) throw new EmptyStackException();		
+
 		byte[] data = null;
 		try {
 			data = Files.readAllBytes(filesInFolder.get(fakeStreamCounter++));

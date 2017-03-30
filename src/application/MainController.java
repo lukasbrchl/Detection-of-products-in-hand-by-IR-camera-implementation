@@ -135,40 +135,28 @@ public class MainController {
 			fds = new FlirDataService(flirDataReciever);
 			fds.valueProperty().addListener((obs, oldValue, newValue) -> { 
 				byte [] byteArray = newValue.getData();
-				byte [] croppedByteArray = new byte[IMAGE_WIDTH*IMAGE_CROPPED_HEIGHT*2];
+				byte [] croppedByteArray = new byte[IMAGE_WIDTH*IMAGE_CROPPED_HEIGHT*2];				
 		 	    System.arraycopy(byteArray, CROP_OFFSET_Y * IMAGE_WIDTH * 2, croppedByteArray, 0,IMAGE_WIDTH*IMAGE_CROPPED_HEIGHT*2);  
-		 	    Mat originalMat, originalCroppedMat, scaledMat, scaledCroppedMat;
-		 	    
-//		 	    float interval = 2.5f;
 		 	    float origMin = ImageConvertor.bytesToCelsius(ImageConvertor.getMin(croppedByteArray));
 		 	    float origMax = ImageConvertor.bytesToCelsius(ImageConvertor.getMax(croppedByteArray));
-////		 		float avg = (origMin + origMax)/2 - 3.0f;
-////		 		float avg = ImageConvertor.bytesToCelsius(ImageConvertor.getMedian(croppedByteArray));
-//				float avg = ImageConvertor.bytesToCelsius(ImageConvertor.getAvg(croppedByteArray));
-//		 		float min = avg - interval/2;
-//				float max = avg + interval/2;
-//				if (origMax - origMin < 5)
-//					scaledCroppedMat = MatOperations.createMat(croppedByteArray, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT, false, min, max, -1);
-//				else 
-//					scaledCroppedMat = MatOperations.createMat(croppedByteArray, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT, true, min, max, -1);
+		 	    Mat originalMat, originalCroppedMat, scaledMat, scaledCroppedMat;		     
 
 				originalMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, false, minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
-
 				if (scaleTempCheckbox.isSelected())
 					scaledMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, scaleTempCheckbox.isSelected(), minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
 				else 
 					scaledMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, true, origMin , origMax, -1);
 
 				originalCroppedMat = new Mat(originalMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));
-
 				Mat mainMat = processMainMat(scaledMat);			
 				Mat workMat = preprocessMat(scaledMat);				
 				Mat workCroppedMat = new Mat(workMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));				
 
 				Mat handMat = workCroppedMat.clone();				
-				handMat = segmentHand(handMat, handThresholdSpinner.getValue());
+				handMat = segmentHand(handMat, handThresholdSpinner.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
 				List <MatOfPoint> contours = MatOperations.findContours(handMat, contourMinSizeSpinner.getValue());
 				MatOfPoint biggest = MatOperations.findBiggestContour(contours);
+				
 				if (contours.size() > 0 && Imgproc.contourArea(biggest) > 100) {					
 					Rect rect = findExtendedHandRegion(handMat);
 					Imgproc.rectangle(handMat, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), Scalar.all(255));
@@ -183,15 +171,15 @@ public class MainController {
 				}
 				//center
 				Image mainImage = ImageConvertor.convertMatToImage(mainMat);
-//				Image handImage = ImageConvertor.convertMatToImage(handMat);
+				Image handImage = ImageConvertor.convertMatToImage(handMat);
 				Utils.updateFXControl(mainImageView.imageProperty(), mainImage);
-//				Utils.updateFXControl(handImageView.imageProperty(), handImage);
+				Utils.updateFXControl(handImageView.imageProperty(), handImage);
 //				//panel
 				Image originalImage = ImageConvertor.convertMatToImage(originalMat);
-//				Image histogramImage = ImageConvertor.convertMatToImage(MatOperations.createHistogram(workMat));	
+				Image histogramImage = ImageConvertor.convertMatToImage(MatOperations.createHistogram(workMat));	
 				Image originalCroppedImage = ImageConvertor.convertMatToImage(originalCroppedMat);
 				Utils.updateFXControl(originalImageView.imageProperty(), originalImage);
-//				Utils.updateFXControl(histogramImageView.imageProperty(), histogramImage);
+				Utils.updateFXControl(histogramImageView.imageProperty(), histogramImage);
 				Utils.updateFXControl(originalCroppedImageView.imageProperty(), originalCroppedImage);
 			});
 			fds.messageProperty().addListener((obs, oldValue, newValue) -> { 
@@ -220,6 +208,21 @@ public class MainController {
 		return rect;
 	}
 	
+	private Mat roiBox(Mat mat, Mat preprocessed) {
+		Mat result = mat.clone();		
+		Mat workmat = preprocessed.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
+		Mat smallResult = mat.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
+		workmat = segmentHand(workmat, handThresholdSpinner.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
+		Rect rect = findExtendedHandRegion(workmat);
+		Imgproc.rectangle(smallResult, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), Scalar.all(255), 2 );
+
+		byte [] data = new byte[smallResult.channels()*smallResult.cols()*smallResult.rows()];
+		smallResult.get(0, 0, data);
+		result.put(CROP_OFFSET_Y, CROP_OFFSET_X, data);
+		
+		return result;
+	}
+	
 	private Mat hullHandWithGoodsRegion(Mat mat, Mat untouched) {
 		Mat result = mat.clone();
 		Mat workmat = untouched.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
@@ -231,23 +234,13 @@ public class MainController {
 		workmat = MatOperations.dilate(workmat, dilateSpinner.getValue(), 1); //try to link them	
 		List<MatOfPoint> contours = MatOperations.findContours(workmat, contourMinSizeSpinner.getValue());
 		handRegionPreprocessed = MatOperations.convexHull(workmat, handRegionPreprocessed, contours, false);
-		
-//		MatOfPoint mopik = new MatOfPoint();
-//		List <MatOfPoint> handContours = MatOperations.findContours(segmentHand(handContoursMat, binaryThresholdSpinner.getValue()), 0);
-//		if (handContours.size() > 0) {
-//			Mat contoursDrawn = MatOperations.drawContours(handContours, mat.width(), mat.height());
-//			Core.findNonZero(contoursDrawn, mopik);
-//			Point point = MatOperations.getMassCenter(mopik, contoursDrawn);
-//	        Imgproc.circle(handRegionPreprocessed, point, 2, new Scalar(0, 0, 0), 15);
-//		}
-		
-		if (!handRegionPreprocessed.equals(workmat)) {
-			byte [] data = new byte[workmat.channels()*workmat.cols()*workmat.rows()];
-			handRegionPreprocessed.get(0, 0, data);
-			result.put(CROP_OFFSET_Y, CROP_OFFSET_X, data);
-		}
+
+		if (!handRegionPreprocessed.equals(workmat)) 
+			MatOperations.replaceMatArea(result, handRegionPreprocessed, CROP_OFFSET_X,  CROP_OFFSET_Y);
 		return result;
 	}	
+	
+	
 	
 	private Mat hullGoodsRegion(Mat mat, Mat untouched) {
 		Mat result = mat.clone();
@@ -260,7 +253,7 @@ public class MainController {
 		workmat = MatOperations.morphology(workmat, morphOpenCheckbox.isSelected(), morphCloseCheckbox.isSelected(), erodeSpinner.getValue(), dilateSpinner.getValue(), morphIterSpinner.getValue());
 		List <MatOfPoint> contours = MatOperations.findContours(workmat, contourMinSizeSpinner.getValue()); //find contours + filter them
 		Mat convexHull = MatOperations.convexHull(workmat, null, contours, true); //draw convex hull mask
-		Mat segmentedHand = segmentHand(handRegionPreprocessed, handThresholdSpinner.getValue()); //find hand mask
+		Mat segmentedHand = segmentHand(handRegionPreprocessed, 220, 4, 3); //find hand mask
 		
 		Core.subtract(convexHull, segmentedHand, withoutHand); //Mat without hand but with noise
 
@@ -269,29 +262,11 @@ public class MainController {
 		handRegionPreprocessed = MatOperations.convexHull(withoutHand, handRegionPreprocessed, Arrays.asList(mop), false);		
 		
 		if (!withoutHand.equals(handRegionPreprocessed)) {
-			byte [] data = new byte[workmat.channels()*workmat.cols()*workmat.rows()];
-			handRegionPreprocessed.get(0, 0, data);
-			result.put(CROP_OFFSET_Y, CROP_OFFSET_X, data);
+			MatOperations.replaceMatArea(result, handRegionPreprocessed, CROP_OFFSET_X,  CROP_OFFSET_Y);			
 		}
 		
 		return result;
-	}
-	
-	private Mat roiBox(Mat mat, Mat preprocessed) {
-		Mat result = mat.clone();		
-		Mat workmat = preprocessed.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
-		Mat smallResult = mat.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
-		workmat = segmentHand(workmat, handThresholdSpinner.getValue());
-		Rect rect = findExtendedHandRegion(workmat);
-		Imgproc.rectangle(smallResult, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), Scalar.all(255), 3 );
-
-		byte [] data = new byte[smallResult.channels()*smallResult.cols()*smallResult.rows()];
-		smallResult.get(0, 0, data);
-		result.put(CROP_OFFSET_Y, CROP_OFFSET_X, data);
-		
-		return result;
-	}
-	
+	}	
 	
 	private Mat segmentGoods(Mat original, Mat mat, double cannyThresh1, double cannyThresh2, boolean open, boolean close, double erode, double dilate, double handThreshold, double contourMinSize) {
 		Mat result = new Mat(mat.size(), mat.type());
@@ -302,7 +277,7 @@ public class MainController {
 		
 		List <MatOfPoint> contours = MatOperations.findContours(result, contourMinSize); //find contours + filter them
 		Mat convexHull = MatOperations.convexHull(result, null, contours, true); //draw convex hull mask
-		Mat segmentedHandMask = segmentHand(original, handThreshold); //find hand mask
+		Mat segmentedHandMask = segmentHand(original, handThreshold, handDilationSpinner.getValue(), handIterSpinner.getValue()); //find hand mask
 		
 		Core.subtract(convexHull, segmentedHandMask, withoutHand); //Mat without hand but with noise
 		result = MatOperations.maskMat(original, withoutHand);  //masked original image - only goods + noise remains	
@@ -317,7 +292,7 @@ public class MainController {
 	
 	private Mat segmentGoods2(Mat mat) {
 		Mat result = new Mat(mat.size(), mat.type());
-		Mat handMask = segmentHand(mat, handThresholdSlider.getValue());
+		Mat handMask = segmentHand(mat, handThresholdSlider.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
 		Mat edges = new Mat();
 
 		handMask = MatOperations.invert(handMask);
@@ -325,35 +300,39 @@ public class MainController {
 		Core.bitwise_and(handMask, result, result);	
 		result = MatOperations.morphology(result, false, true, erodeSpinner.getValue(), dilateSpinner.getValue(), morphIterSpinner.getValue());
 		
-		int cnt=0, counter2 = 0;
-		List <MatOfPoint> mop = MatOperations.findContours(result, contourMinSizeSpinner.getValue());	
-
-		System.out.println("____________________" + "Number of contours:" + mop.size() + "____________________");
-		for (MatOfPoint one : mop) {
-			double area = Imgproc.contourArea(one);
-			double length = Imgproc.arcLength(new MatOfPoint2f(one.toArray()), false);
-
-			boolean isConvex = Imgproc.isContourConvex(one);
-			System.out.println("_______ " + counter2 + " _______");
-			System.out.println("Area: " + area);
-			System.out.println("Length: " + length);
-			System.out.println("Convexity: " + isConvex);
-
-			if (length > 30)
-				cnt++;
-			counter2++;
-		}
-		if (cnt!= 0)
-			recognizedLabel.setText("Hand with goods");
-		else 
-			recognizedLabel.setText("Nothing interesting");
+		goodsContourFeatures(MatOperations.findContours(result, contourMinSizeSpinner.getValue()));
+	
 		return result;
 	}
 	
+	private void goodsContourFeatures(List <MatOfPoint> mopList) {
+		int contoursCount = mopList.size();
+		float areaSum=0, areaMin = Float.MAX_VALUE, areaMax = 0, areaAvg = 0;
+		float lengthSum=0, lengthMin = Float.MAX_VALUE, lengthMax = 0, lengthAvg = 0;
+
+		for (MatOfPoint mop : mopList) {
+			float area = (float) Imgproc.contourArea(mop);
+			float length = (float) Imgproc.arcLength(new MatOfPoint2f(mop.toArray()), false);
+			areaSum += area;
+			lengthSum += length;
+			if (areaMin > area) areaMin = area;
+			if (areaMax < area) areaMax = area;
+			if (lengthMin > length) lengthMin = length;
+			if (lengthMax < length) lengthMax = length;
+		}
+		areaAvg = contoursCount != 0 ? areaSum/contoursCount : 0 ;
+		lengthAvg = contoursCount != 0 ? lengthSum/contoursCount : 0;
+		System.out.print(contoursCount + ";" +  lengthMin + ";" + lengthMax + ";" + lengthSum + ";" + lengthAvg + ";" + areaMin + ";" + areaMax + ";" + areaSum + ";" + areaAvg);
+//		System.out.println(";Hand only");
+		System.out.println(";Hand with goods");
+//		System.out.println(";Hand in shelf");
+
+
+	}
 	
-	private Mat segmentHand(Mat mat, double threshold) {
+	private Mat segmentHand(Mat mat, double threshold, double dilation, double iterations) {
 		Mat result = new Mat(mat.size(), mat.type());	    
-		result = MatOperations.dilate(mat, handDilationSpinner.getValue(), handIterSpinner.getValue());		
+		result = MatOperations.dilate(mat, dilation, (int) iterations);		
 		result =  MatOperations.binaryTreshold(result, threshold);
 		return result;
 	}
@@ -390,11 +369,7 @@ public class MainController {
 			maxTempPane.setDisable(true);
 		}		
 	}
-	
-	@FXML 
-	protected void blurCheckboxClicked(ActionEvent event) {
-	}
-	
+		
 	//right panel
 	@FXML
 	protected void saveImagesCheckboxClicked(ActionEvent event) {
@@ -532,8 +507,8 @@ public class MainController {
 		
 		contourMinSizeSpinner.getValueFactory().setValue(0.0);
 		
-		handThresholdSpinner.getValueFactory().setValue(230.0);
-		handDilationSpinner.getValueFactory().setValue(3.0);
+		handThresholdSpinner.getValueFactory().setValue(180.0);
+		handDilationSpinner.getValueFactory().setValue(4.0);
 		handIterSpinner.getValueFactory().setValue(8.0);
 
 		
@@ -542,9 +517,9 @@ public class MainController {
 		blurMainCheckbox.setSelected(false); 
 		cannyMainCheckbox.setSelected(false);
 		morphologyMainCheckbox.setSelected(false);
-		hullHandGoodsMainCheckbox.setSelected(true);
+		hullHandGoodsMainCheckbox.setSelected(false);
 		hullGoodsMainCheckbox.setSelected(false);
-		roiMainCheckbox.setSelected(true);
+		roiMainCheckbox.setSelected(false);
 	}
 	
 	//getters, setters	
