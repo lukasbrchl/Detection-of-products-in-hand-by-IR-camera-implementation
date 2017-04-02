@@ -8,6 +8,7 @@ import org.opencv.core.Mat;
 
 import application.MainController;
 import data.reciever.FlirDataReciever;
+import data.reciever.domain.DataPayload;
 import data.reciever.domain.ImageData;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -30,14 +31,14 @@ public class FlirDataService extends Service<ImageData> {
 		
 		return new Task<ImageData>() {
 			@Override protected ImageData call() {				
-				byte[] byteArray;				
+				DataPayload payload;				
 				try {
-					byteArray = dataReciever.getImage();
-					while (byteArray != null && byteArray.length != 0 && !isCancelled()) {
-						ImageData data = new ImageData(byteArray);
+					payload = dataReciever.getImage();
+					while (payload != null && payload.getData().length != 0 && !isCancelled()) {
+						ImageData data = new ImageData(payload.getData(), payload.getFilename());
 						updateValue(data);
 						updateMessage(dataReciever.getStatus().getStrStatus());
-						byteArray = dataReciever.getImage();						
+						payload = dataReciever.getImage();						
 					}	
 					
 				} catch (InterruptedException | ClosedByInterruptException ex ) { //catch Thread.sleep()

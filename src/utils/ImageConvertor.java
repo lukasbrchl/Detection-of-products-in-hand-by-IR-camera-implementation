@@ -112,6 +112,7 @@ public class ImageConvertor {
  	    BufferedImage image = new BufferedImage(m.cols(), m.rows(), BufferedImage.TYPE_BYTE_GRAY);
  	    final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
  	    System.arraycopy(buffer, 0, targetPixels, 0, buffer.length);  
+ 	    
  	    return image;
  	}
 	 

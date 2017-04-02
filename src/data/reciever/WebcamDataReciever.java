@@ -1,6 +1,7 @@
 package data.reciever;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
@@ -8,7 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.EmptyStackException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.opencv.core.Mat;
@@ -33,7 +36,7 @@ public class WebcamDataReciever extends DataReciever<Mat>{
 
 	public void openConnection() {
 		camera = new VideoCapture(cameraId);
-		if (!camera.isOpened()) initDummyHost();
+		if (!camera.isOpened()) throw new NoSuchElementException();
 	}
 	
 	//do cleanup
@@ -42,10 +45,10 @@ public class WebcamDataReciever extends DataReciever<Mat>{
 	}
 
 	@Override
-	protected void initDummyHost() {
+	public void initDummyHost(Path path) {
 		try {
 			isDummy = true;
-			filesInFolder = Files.walk(Paths.get(Config.getInstance().getValue(Config.WEBCAM_DUMMY_PATH).toString())).filter(Files::isRegularFile).collect(Collectors.toList());
+			filesInFolder = Files.walk(path).filter(Files::isRegularFile).collect(Collectors.toList());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

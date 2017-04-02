@@ -17,12 +17,14 @@ import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import data.reciever.domain.DataPayload;
 import data.reciever.domain.Status;
 import utils.Config;
 
-public class FlirDataReciever extends DataReciever<byte[]> {
+public class FlirDataReciever extends DataReciever<DataPayload> {
 	
 	private final int BUFFER_SIZE = 8192; // or 4096, or more
 	private Socket socket; 
@@ -30,7 +32,7 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 	private final int bytesToRecieve; //shouldn't change while recieving
 	private String hostName;
 	private final int port;
-	private byte[] latestBuffer;
+	private DataPayload latestBuffer;
 	
 	public FlirDataReciever (String hostName, int port, int bytesToRecieve, int playbackSpeed) {
 		super();
@@ -43,16 +45,11 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 	
 	public void openConnection() {
 		try {
-			if (isDummy) { //debugging purpose
-				initDummyHost();
-				return;
-			}
 			socket = new Socket(hostName, port);
 			inputStream =  socket.getInputStream();
 			status = Status.CONNECTED;
 			
 		} catch (Exception e) {
-			initDummyHost();
 		}	
 	}
 	
@@ -72,7 +69,7 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 		isDummy = false;
 	}
 	
-	protected byte[] getImageFromStream() {
+	protected DataPayload getImageFromStream() {
 		byte [] file = new byte [bytesToRecieve];	
 		byte [] buffer = new byte[BUFFER_SIZE]; 
 		int readCount, bytesWritten = 0;
@@ -81,12 +78,12 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 			while ((readCount = inputStream.read(buffer)) > 0) {
 				System.arraycopy(buffer, 0, file, bytesWritten, readCount); 
 				bytesWritten += readCount;
-				if (bytesWritten >= bytesToRecieve) return file;
+				if (bytesWritten >= bytesToRecieve) return new DataPayload(file, null);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}		
-		return file;
+		return new DataPayload(file, null);
 	}
 	
 	boolean findIfArrayIsASubset(int[] main, int[] sub) {
@@ -105,26 +102,28 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 		return false;
 	}
 
-	protected byte[] getImageFromDummyStream() throws InterruptedException, ClosedByInterruptException {		
+	protected DataPayload getImageFromDummyStream() throws InterruptedException, ClosedByInterruptException {		
 		if (fakeStreamCounter >= filesInFolder.size()) fakeStreamCounter = 0;
-//		if (fakeStreamCounter >= filesInFolder.size()) throw new EmptyStackException();		
+		if (fakeStreamCounter >= filesInFolder.size()) throw new NoSuchElementException();		
 
+		String filename = null;
 		byte[] data = null;
 		try {
+			filename = filesInFolder.get(fakeStreamCounter).getFileName().toString();
 			data = Files.readAllBytes(filesInFolder.get(fakeStreamCounter++));
 		} catch (Exception e) {
 			if (e instanceof ClosedByInterruptException) throw new ClosedByInterruptException();
 			e.printStackTrace();
 		}
 		Thread.sleep(playbackSpeed);				
-		return data;
+		return new DataPayload(data, filename);
 	}
 	
 	protected boolean saveImage() {
 		try {
 			String filename = new SimpleDateFormat("MM_dd_HH_mm_ss_SSS").format(new Date());
 			DataOutputStream os = new DataOutputStream(new FileOutputStream(Config.getInstance().getValue(Config.FLIR_IMAGE_SAVE)+ filename + ".bin"));		 
-			os.write(latest, 0, bytesToRecieve);
+			os.write(latest.getData(), 0, bytesToRecieve);
 			os.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -133,10 +132,11 @@ public class FlirDataReciever extends DataReciever<byte[]> {
 		return true;
 	}
 
-	protected void initDummyHost() {
+	public void initDummyHost(Path path) {
 		try {
 			isDummy = true;
-			filesInFolder = Files.walk(Paths.get(Config.getInstance().getValue(Config.FLIR_DUMMY_PATH).toString())).filter(Files::isRegularFile).collect(Collectors.toList());
+			filesInFolder = Files.walk(path).filter(Files::isRegularFile).collect(Collectors.toList());
+//			filesInFolder = Files.walk(Paths.get(Config.getInstance().getValue(Config.FLIR_DUMMY_PATH).toString())).filter(Files::isRegularFile).collect(Collectors.toList());
 //			filesInFolder = Files.walk(Paths.get("D:\\ThesisProjectImages\\3_17_termo3")).filter(Files::isRegularFile).collect(Collectors.toList());			
 //			filesInFolder = Files.walk(Paths.get("D:\\ThesisProjectImages\\3_17_termo2")).filter(Files::isRegularFile).collect(Collectors.toList());			
 		} catch (IOException e) {

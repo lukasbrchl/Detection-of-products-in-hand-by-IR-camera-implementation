@@ -38,17 +38,9 @@ public class MatOperations {
 	}
 	
 	public static Mat brightnessContrast(Mat mat, double brightness, double contrast) { //CLAHE http://docs.opencv.org/trunk/d5/daf/tutorial_py_histogram_equalization.html
-        double inverse_gamma = 1.0 / 3;
-
-        Mat lut = new Mat(1, 256, CvType.CV_8UC1);
-        int data;
-        for (int i = 0; i < 256; i++) {
-            data = (int) (Math.pow((double) i / 255.0, inverse_gamma) * 255.0);
-            lut.put(0, i, data);
-        }		
-		Core.LUT(mat, lut, mat);
-		
+        double inverse_gamma = 1.0 / 3;      		
 		mat.convertTo(mat, -1, brightness + 1, -contrast);
+		Imgproc.equalizeHist(mat, mat);
 		return mat;
 	}
 	
@@ -75,10 +67,11 @@ public class MatOperations {
 		
 		
 //		Imgproc.GaussianBlur(mat, resultMat, new Size(size1, size2), sigma);
-		Imgproc.medianBlur(mat, medianMat,7);
-		Imgproc.GaussianBlur(medianMat, resultMat, new Size(size1, size2), sigma);
+		Imgproc.medianBlur(mat, medianMat,13);
+//		Imgproc.GaussianBlur(medianMat, resultMat, new Size(size1, size2), sigma);
+		Imgproc.bilateralFilter(medianMat, resultMat, (int) sigma, size1, size2);
+		Imgproc.GaussianBlur(resultMat, resultMat, new Size(3,3), 2);
 
-//		Imgproc.bilateralFilter(medianMat, resultMat, (int) sigma, size1, size2);
 		return resultMat;
 	}
 	
@@ -112,7 +105,8 @@ public class MatOperations {
 		
         Imgproc.findContours(mat, allContours,  new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
         for (int i = 0; i < allContours.size(); i++) {
-        	double countourArea = Imgproc.contourArea(allContours.get(i));	      
+//        	double countourArea = Imgproc.contourArea(allContours.get(i));	  
+        	double countourArea = Imgproc.arcLength(new MatOfPoint2f(allContours.get(i).toArray()), false);
 	        if (countourArea > minSize) filteredContours.add(allContours.get(i));	      
 		}        
         return filteredContours;
@@ -122,7 +116,7 @@ public class MatOperations {
 		MatOfPoint max = new MatOfPoint();
 		double maxArea = 0;
 		for (MatOfPoint mop : contours) {
-        	double countourArea = Imgproc.contourArea(mop);	     
+        	double countourArea = Imgproc.arcLength(new MatOfPoint2f(mop.toArray()), false);	     
         	if (countourArea > maxArea) {
         		maxArea = countourArea;
         		max = mop;
@@ -131,31 +125,27 @@ public class MatOperations {
 		return max;
 	}
 	
-	public static Mat drawContours(List <MatOfPoint> contours, int width, int height) {	
+	public static Mat drawContours(List <MatOfPoint> contours, int width, int height, int thickness) {	
 		Mat contourImg = new Mat(height, width, CvType.CV_8U, new Scalar(0,0,0));		
 		for (int i = 0; i < contours.size(); i++) {
-		    Imgproc.drawContours(contourImg, contours, i, new Scalar(255, 0, 0), -1);
+		    Imgproc.drawContours(contourImg, contours, i, new Scalar(255, 0, 0), thickness);
 		}
 		return contourImg;	
 	}
 	
-	public static Mat convexHull(Mat mat, Mat drawOn, List <MatOfPoint> contours, boolean fill) {
-		Mat contoursMat = drawContours(contours, mat.width(), mat.height());
+	public static MatOfPoint convexHull(Mat mat, List <MatOfPoint> contours) {
+		Mat contoursMat = drawContours(contours, mat.width(), mat.height(), 1);
         MatOfPoint points = new MatOfPoint();
         MatOfInt hullTemp = new MatOfInt();
-        Mat result;
-        if (drawOn == null) result = new Mat(mat.height(), mat.width(), CvType.CV_8U, new Scalar(0,0,0));    
-        else result = drawOn.clone();
-        
         Core.findNonZero(contoursMat, points);   
-        if (points == null || points.empty()) return mat;        
+        if (points == null || points.empty()) return new MatOfPoint();        
 		
         Imgproc.convexHull(points, hullTemp);	
-//		System.out.println(Imgproc.contourArea(hullTemp));
-//        System.out.println(hullTemp.dump());
-
-        
-        MatOfPoint mopOut = new MatOfPoint();
+        return convertMitToMop(points, hullTemp);
+	}
+	
+	public static MatOfPoint convertMitToMop(MatOfPoint points, MatOfInt hullTemp) {
+		MatOfPoint mopOut = new MatOfPoint();
         mopOut.create((int)hullTemp.size().height,1,CvType.CV_32SC2);
 
         for(int i = 0; i < hullTemp.size().height ; i++)
@@ -165,42 +155,15 @@ public class MatOperations {
             		points.get(index, 0)[0], points.get(index, 0)[1]
             };
             mopOut.put(i, 0, point);
-        }        
-        
-		System.out.println(Imgproc.contourArea(mopOut));
-
-        
-        List<MatOfPoint> cnl = new ArrayList<>();
-        cnl.add(mopOut);
-        int thickness =  fill ? Core.FILLED : 2;
-        Imgproc.drawContours(result, cnl, -1, Scalar.all(255), thickness);        
-        return result;
+        }      
+        return mopOut;
 	}
 	
-	public static Mat aproxCurve(Mat mat, List <MatOfPoint> contours) { //TODO: contains bugs
-		Mat contoursMat = drawContours(contours, mat.width(), mat.height());
-		
-		MatOfPoint points = new MatOfPoint();
-		MatOfPoint2f thisContour2f = new MatOfPoint2f();
-		MatOfPoint approxContour = new MatOfPoint();
-		MatOfPoint2f approxContour2f = new MatOfPoint2f();
-		
-		Core.findNonZero(contoursMat, points);   
-		
-        if (points == null || points.empty()) return mat;        		
-		
-        points.convertTo(thisContour2f, CvType.CV_32FC1);
-		
-		Imgproc.approxPolyDP(thisContour2f, approxContour2f, 2, false);
-		
-		approxContour2f.convertTo(approxContour, CvType.CV_32S);
-		
-		
-		Mat result = new Mat(mat.height(), mat.width(), CvType.CV_8U, new Scalar(0,0,0));     
-		List<MatOfPoint> cnl = new ArrayList<>();
-        cnl.add(approxContour);
-        Imgproc.drawContours(result, cnl, -1, Scalar.all(255), Core.FILLED);   
-        return result;
+	public static MatOfPoint aproxCurve(Mat mat, MatOfPoint contour, double epsilon, boolean closed) {
+		MatOfPoint2f approxContour2f = new MatOfPoint2f();		 
+		MatOfPoint2f thisContour2f = new MatOfPoint2f(contour.toArray());	
+		Imgproc.approxPolyDP(thisContour2f, approxContour2f, 0.5, true);		
+		return new MatOfPoint(approxContour2f.toArray());
 	}	
 
     public static Point getMassCenter(MatOfPoint mop, Mat mat) {
