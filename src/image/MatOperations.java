@@ -9,6 +9,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
+import org.opencv.core.MatOfInt4;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
@@ -70,7 +71,7 @@ public class MatOperations {
 		Imgproc.medianBlur(mat, medianMat,13);
 //		Imgproc.GaussianBlur(medianMat, resultMat, new Size(size1, size2), sigma);
 		Imgproc.bilateralFilter(medianMat, resultMat, (int) sigma, size1, size2);
-		Imgproc.GaussianBlur(resultMat, resultMat, new Size(3,3), 2);
+//		Imgproc.GaussianBlur(resultMat, resultMat, new Size(3,3), 2);
 
 		return resultMat;
 	}
@@ -142,6 +143,23 @@ public class MatOperations {
 		
         Imgproc.convexHull(points, hullTemp);	
         return convertMitToMop(points, hullTemp);
+	}
+	
+	public static MatOfInt convexHull2(Mat mat, List <MatOfPoint> contours) {
+		Mat contoursMat = drawContours(contours, mat.width(), mat.height(), 1);
+        MatOfPoint points = new MatOfPoint();
+        MatOfInt hull = new MatOfInt();
+        Core.findNonZero(contoursMat, points);   
+        if (points == null || points.empty()) return new MatOfInt();        
+		
+        Imgproc.convexHull(points, hull);
+        return hull;
+	}
+	
+	public static MatOfInt4 convexityDefects(MatOfPoint contour, MatOfInt convexHull) {
+		MatOfInt4 convexityDefects = new MatOfInt4();
+		Imgproc.convexityDefects(contour, convexHull, convexityDefects);
+		return convexityDefects;
 	}
 	
 	public static MatOfPoint convertMitToMop(MatOfPoint points, MatOfInt hullTemp) {
