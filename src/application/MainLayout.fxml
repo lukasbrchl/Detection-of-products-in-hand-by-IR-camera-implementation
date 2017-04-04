@@ -17,7 +17,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="mainBorderPane" prefHeight="820.0" prefWidth="1240.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
+<BorderPane fx:id="mainBorderPane" prefHeight="823.0" prefWidth="1240.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainController">
    <bottom>
       <HBox alignment="CENTER_LEFT" prefHeight="57.0" prefWidth="1240.0" BorderPane.alignment="CENTER_LEFT">
          <children>
@@ -235,9 +235,6 @@
                         <Insets top="10.0" />
                      </padding>
                   </Separator>
-                  <Spinner fx:id="optionalSpinner3" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" />
-                  <Spinner fx:id="optionalSpinner4" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" />
-                  <Spinner fx:id="optionalSpinner5" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" />
                </children>
                <padding>
                   <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
@@ -324,20 +321,24 @@
          <children>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <ImageView fx:id="mainImageView" fitHeight="512.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView fx:id="mainImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" />
                </children>
             </HBox>
-            <ImageView fx:id="goodsImageView" fitHeight="200.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="mogImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
-                  <Insets top="15.0" />
+                  <Insets top="5.0" />
                </VBox.margin>
             </ImageView>
-            <ImageView fx:id="handImageView" fitHeight="200.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="handImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
-                  <Insets top="15.0" />
+                  <Insets top="5.0" />
                </VBox.margin>
             </ImageView>
-            <ImageView fx:id="webcamImageView" fitHeight="12.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" />
+            <ImageView fx:id="goodsImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+               <VBox.margin>
+                  <Insets top="5.0" />
+               </VBox.margin>
+            </ImageView>
          </children>
          <BorderPane.margin>
             <Insets bottom="14.0" top="14.0" />

@@ -78,9 +78,11 @@ public class MatOperations {
 	
 	public static Mat binaryTreshold(Mat mat, double threshold) {
 		Mat result = new Mat(mat.size(), mat.type());        
-		Imgproc.threshold(mat, result, threshold , 255, Imgproc.THRESH_BINARY);
-//		if ((int) (threshold % 2) == 0) threshold ++;
-//		Imgproc.adaptiveThreCshold(mat, result, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, (int) threshold, 50);
+//		Imgproc.threshold(mat, result, threshold , 255, Imgproc.THRESH_BINARY);
+		if ((int) (threshold % 2) == 0) threshold ++;
+		Imgproc.threshold(mat, result, Imgproc.threshold(mat, new Mat(), 0, 255, Imgproc.THRESH_OTSU) + 150, 255, Imgproc.THRESH_BINARY);
+
+//		Imgproc.adaptiveThreshold(mat, result, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 501, 5);
 //		th2 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
 //	            cv2.THRESH_BINARY,11,2)
 //	th3 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
@@ -177,10 +179,10 @@ public class MatOperations {
         return mopOut;
 	}
 	
-	public static MatOfPoint aproxCurve(Mat mat, MatOfPoint contour, double epsilon, boolean closed) {
+	public static MatOfPoint aproxCurve(MatOfPoint contour, double epsilon, boolean closed) {
 		MatOfPoint2f approxContour2f = new MatOfPoint2f();		 
 		MatOfPoint2f thisContour2f = new MatOfPoint2f(contour.toArray());	
-		Imgproc.approxPolyDP(thisContour2f, approxContour2f, 0.5, true);		
+		Imgproc.approxPolyDP(thisContour2f, approxContour2f,epsilon, closed);		
 		return new MatOfPoint(approxContour2f.toArray());
 	}	
 

@@ -26,7 +26,9 @@ import utils.Config;
 
 public class FlirDataReciever extends DataReciever<DataPayload> {
 	
-	private final int BUFFER_SIZE = 8192; // or 4096, or more
+//	private final int BUFFER_SIZE = 8192; // or 4096, or more\
+	private final int BUFFER_SIZE = 8000; // or 4096, or more
+
 	private Socket socket; 
 	private InputStream inputStream;
 	private final int bytesToRecieve; //shouldn't change while recieving
