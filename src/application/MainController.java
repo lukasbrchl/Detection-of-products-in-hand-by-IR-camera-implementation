@@ -125,8 +125,7 @@ public class MainController {
 			 flirDataReciever.setPlaybackSpeed(newValue.intValue());
 			 webcamDataReciever.setPlaybackSpeed(newValue.intValue());
 		 });
-//		mog = Video.createBackgroundSubtractorMOG2(51, 200, true);
-
+		mog = Video.createBackgroundSubtractorMOG2(51, 200, true);
 	 }
 	 
 	 @FXML 
@@ -141,7 +140,6 @@ public class MainController {
 
 		}
 		mog = Video.createBackgroundSubtractorMOG2(51, 200, true);
-//		mog = Video.createBackgroundSubtractorMOG2();
 	 }
 
 	//buttons
@@ -180,11 +178,11 @@ public class MainController {
 				Mat workMat = preprocessMat(scaledMat);				
 				Mat workCroppedMat = new Mat(workMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));				
 //
-				Mat handMat = workCroppedMat.clone();				
-				handMat = segmentHand(handMat, handThresholdSlider.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
+//				Mat handMat = workCroppedMat.clone();				
+//				handMat = segmentHand(handMat, handThresholdSlider.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
 //				List <MatOfPoint> contours = MatOperations.findContours(handMat, contourMinSizeSpinner.getValue());
 //				MatOfPoint biggest = MatOperations.findBiggestContour(contours);
-//				
+				
 //				if (contours.size() > 0 && Imgproc.contourArea(biggest) > 100) {
 //					Mat croppedEdgesMat = workCroppedMat.clone();						
 //					Rect rect = findExtendedHandRegion(handMat);
@@ -196,13 +194,13 @@ public class MainController {
 //						Utils.updateFXControl(goodsImageView.imageProperty(), goodsImage);			
 //					}
 //				}
-//				tady
-				if (print) System.out.println(";" + newValue.getFilename());
-				handMat = new Mat(mainMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));				
-				Mat fgmask = new Mat();
-				mog.setVarThreshold(50);
 
+				if (print) System.out.println(";" + newValue.getFilename());
+				Mat handMat = new Mat(mainMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));				
+				Mat fgmask = new Mat();
+				mog.setVarThreshold(100);
 				mog.apply(handMat, fgmask, 0);
+				
 				fgmask = MatOperations.maskMat(workCroppedMat, fgmask);
 				
 				Mat segmentedGoods = Mat.zeros(fgmask.size(), fgmask.type()); 
@@ -214,28 +212,28 @@ public class MainController {
 					segmentedHandSmall = segmentedHandFull.submat(rect);
 					Mat first = new Mat(segmentedHandSmall.size(), segmentedHandSmall.type());
 					Mat second = new Mat(segmentedHandSmall.size(), segmentedHandSmall.type());
-					Imgproc.threshold(segmentedHandSmall, first, 200 , 255, Imgproc.THRESH_BINARY);
-					Imgproc.adaptiveThreshold(segmentedHandSmall, second, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY,2001, -190);
+					Imgproc.threshold(segmentedHandSmall, first, 230 , 255, Imgproc.THRESH_BINARY);
+					Imgproc.adaptiveThreshold(segmentedHandSmall, second, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY,2001, -210);
 					Core.bitwise_or(first, second, segmentedHandSmall);
 				}
 				
 				Mat segmentedHand = MatOperations.invert(segmentedHandFull);
-				fgmask.copyTo(segmentedGoods, segmentedHand);
-//				tady
-//				
-//				segmentedHand = MatOperations.morphology(segmentedHand, true, false, 3, 6, 3);
+				fgmask.copyTo(segmentedGoods, segmentedHand);	
 				
-//				Mat segmentedHand = segmentHand(fgmask, handThresholdSlider.getValue(), 4, 4);
-//				List<MatOfPoint> contours = MatOperations.findContours(segmentedHand, 0);
+				contours = MatOperations.findContours(segmentedHandSmall, 0);
 //				MatOfPoint biggest = MatOperations.findBiggestContour(contours);
+//				Imgproc.drawContours(segmentedGoods, contours, -1, Scalar.all(255), 2);
+				MatOfPoint convexHull = MatOperations.convexHull(segmentedHandSmall, contours);
+				Imgproc.drawContours(segmentedHandSmall, Arrays.asList(convexHull), -1, Scalar.all(255), 2);
+//				MatOfInt convexHull2 = MatOperations.convexHull2(segmentedGoods, contours.get(0));
 //				if (!biggest.empty()) {
 //					MatOfPoint aprox = MatOperations.aproxCurve(biggest, 1, true);
 //					if (!aprox.empty()) { 
 //						MatOfInt convexHull2 = new MatOfInt();
 //						Imgproc.convexHull(aprox, convexHull2);
-//						MatOfPoint convexHull = MatOperations.convexHull(segmentedHand, Arrays.asList(aprox));
-//						Imgproc.drawContours(segmentedHand, Arrays.asList(convexHull), -1, Scalar.all(255), 3);
-//	
+////						MatOfPoint convexHull = MatOperations.convexHull(segmentedHand, Arrays.asList(aprox));
+//						Imgproc.drawContours(segmentedHandSmall, Arrays.asList(aprox), -1, Scalar.all(255), 3);
+////	
 //						int hpoints = convexHull2.checkVector(1, CvType.CV_32S);
 //						int npoints = aprox.checkVector(2,CvType.CV_32S);
 //						if (convexHull2.toArray().length > 2) {
@@ -251,10 +249,12 @@ public class MainController {
 //						        int depth = cdList.get(j+3)/256;
 ////						        System.out.println(depth);
 //						        defectsArr[j/4] = defect;
-//	//		
-////						        Imgproc.circle(segmentedHand, start, 5, Scalar.all(255), 2);
-//						        Imgproc.circle(segmentedHand, end, 5, Scalar.all(255), 2);
-////						        Imgproc.circle(segmentedHand, defect, 5, Scalar.all(255), 2);
+//						        
+////						        if (depth > 20) {		//		
+////							        Imgproc.circle(segmentedGoods, start, 5, Scalar.all(255), 2);
+////							        Imgproc.circle(segmentedGoods, end, 5, Scalar.all(255), 2);
+//							        Imgproc.circle(segmentedHandSmall, defect, 5, Scalar.all(255), 2);
+////						        }
 //						    }
 //						    if (defectsArr.length > 5) {
 ////						    	Point center = new Point();
@@ -267,16 +267,7 @@ public class MainController {
 //						}
 //					}
 //				}
-				
-				Point center = MatOperations.getMassCenter(MatOperations.findBiggestContour(contours), segmentedHandFull);
-				Imgproc.circle(segmentedHandFull, center, 3, Scalar.all(0));
-				
-//				segmentedHand = MatOperations.invert(segmentedHand);
-//				fgmask.copyTo(segmentedHand, segmentedHand);
-//				
-//				segmentedHand = MatOperations.morphology(segmentedHand, true, false, 3, 6, 3);
-
-				
+//
 				//center
 				Image mainImage = ImageConvertor.convertMatToImage(mainMat);
 				Image mogImage = ImageConvertor.convertMatToImage(fgmask);
@@ -288,27 +279,29 @@ public class MainController {
 				Utils.updateFXControl(goodsImageView.imageProperty(), goodsImage);			
 
 //				//panel
-//				Image originalImage = ImageConvertor.convertMatToImage(originalMat);
-//				Image histogramImage = ImageConvertor.convertMatToImage(MatOperations.createHistogram(workMat));	
-//				Image originalCroppedImage = ImageConvertor.convertMatToImage(originalCroppedMat);
-//				Utils.updateFXControl(originalImageView.imageProperty(), originalImage);
-//				Utils.updateFXControl(histogramImageView.imageProperty(), histogramImage);
-//				Utils.updateFXControl(originalCroppedImageView.imageProperty(), originalCroppedImage);
+				Image originalImage = ImageConvertor.convertMatToImage(originalMat);
+				Image histogramImage = ImageConvertor.convertMatToImage(MatOperations.createHistogram(workMat));	
+				Image originalCroppedImage = ImageConvertor.convertMatToImage(originalCroppedMat);
+				Utils.updateFXControl(originalImageView.imageProperty(), originalImage);
+				Utils.updateFXControl(histogramImageView.imageProperty(), histogramImage);
+				Utils.updateFXControl(originalCroppedImageView.imageProperty(), originalCroppedImage);
+				
+				refreshBackground(workCroppedMat);
 			});
 			fds.messageProperty().addListener((obs, oldValue, newValue) -> { 
 				streamStatusLabel.setText(newValue);
 				});
 			fds.start();
-		}
-		if (wcs == null || !wcs.isRunning()) {
-			wcs = new WebcamService(webcamDataReciever);
-			wcs.valueProperty().addListener((obs, oldValue, newValue) -> { 
-//				Mat mainMat = newValue;
-//				Image mainImage = ImageConvertor.convertMatToImage(mainMat);
-//				Utils.updateFXControl(webcamImageView.imageProperty(), mainImage);
-				
-			});
-//			wcs.start();
+		}		
+	}
+	
+	private void refreshBackground(Mat mat) {
+		Mat items = MatOperations.doCannyEdgeDetection(mat, 20, 40);
+		List <MatOfPoint> contours = MatOperations.findContours(items, 25);	
+		if (contours.size() == 0) {
+//			System.out.println("background");
+			mog = Video.createBackgroundSubtractorMOG2(51, 200, true);
+			mog.apply(mat, new Mat());
 		}
 	}
 
@@ -672,7 +665,7 @@ public class MainController {
 		saveImagesCheckbox.setSelected(false);
 		playbackSpeedSpinner.getValueFactory().setValue(100.0);
 		minTempSpinner.getValueFactory().setValue(28.0);
-		maxTempSpinner.getValueFactory().setValue(37.0);
+		maxTempSpinner.getValueFactory().setValue(38.0);
 		scaleTempCheckbox.setSelected(true);
 		clache1Spinner.getValueFactory().setValue(1.0); 
 		clache2Spinner.getValueFactory().setValue(1.0); 

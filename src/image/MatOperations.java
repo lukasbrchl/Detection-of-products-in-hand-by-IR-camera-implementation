@@ -78,9 +78,9 @@ public class MatOperations {
 	
 	public static Mat binaryTreshold(Mat mat, double threshold) {
 		Mat result = new Mat(mat.size(), mat.type());        
-//		Imgproc.threshold(mat, result, threshold , 255, Imgproc.THRESH_BINARY);
+		Imgproc.threshold(mat, result, threshold , 255, Imgproc.THRESH_BINARY);
 		if ((int) (threshold % 2) == 0) threshold ++;
-		Imgproc.threshold(mat, result, Imgproc.threshold(mat, new Mat(), 0, 255, Imgproc.THRESH_OTSU) + 150, 255, Imgproc.THRESH_BINARY);
+//		Imgproc.threshold(mat, result, Imgproc.threshold(mat, new Mat(), 0, 255, Imgproc.THRESH_OTSU) + 150, 255, Imgproc.THRESH_BINARY);
 
 //		Imgproc.adaptiveThreshold(mat, result, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 501, 5);
 //		th2 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
