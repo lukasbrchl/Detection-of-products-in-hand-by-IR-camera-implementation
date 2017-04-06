@@ -270,14 +270,12 @@ public class MatOperations {
 		return histImage;		
 	}
 	
-	public static Mat drawMinBoundingRect(Mat mat, Point [] points) {
-		Mat result = mat.clone();
+	public static void drawMinBoundingRect(Mat mat, Point [] points) {
 		if (points != null) {
 			for (int i = 0; i < points.length; ++i) {
-				Imgproc.line(result, points[i], points[(i+1)%4], Scalar.all(255), 3);
+				Imgproc.line(mat, points[i], points[(i+1)%4], Scalar.all(127), 2);
 			}
 		}
-		return result;
 	}
 	
 	public static void replaceMatArea(Mat mat, Mat small, int offsetX, int offsetY) { 
