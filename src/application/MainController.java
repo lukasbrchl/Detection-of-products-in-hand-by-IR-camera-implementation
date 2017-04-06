@@ -213,8 +213,8 @@ public class MainController {
 					segmentedHandSmall = segmentedHandFull.submat(rect);
 					Mat first = new Mat(segmentedHandSmall.size(), segmentedHandSmall.type());
 					Mat second = new Mat(segmentedHandSmall.size(), segmentedHandSmall.type());
-					Imgproc.threshold(segmentedHandSmall, first, 230 , 255, Imgproc.THRESH_BINARY);
-					Imgproc.adaptiveThreshold(segmentedHandSmall, second, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY,2001, -210);
+					Imgproc.threshold(segmentedHandSmall, first, 220 , 255, Imgproc.THRESH_BINARY);
+					Imgproc.adaptiveThreshold(segmentedHandSmall, second, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY,1555, -210);
 					Core.bitwise_or(first, second, segmentedHandSmall);
 				}
 				
@@ -225,19 +225,11 @@ public class MainController {
 				Point [] contoursPoints = new Point[0];
 				for (int i = 0; i < contours.size(); ++i) contoursPoints = Stream.concat(Arrays.stream(contoursPoints), Arrays.stream(contours.get(i).toArray())).toArray(Point[]::new);				
 				MatOfPoint joinedContours = new MatOfPoint(contoursPoints);
-//				MatOfPoint convexHull = MatOperations.convexHull(segmentedHandSmall, Arrays.asList(joinedContours));
-//				Imgproc.drawContours(segmentedHandSmall, Arrays.asList(convexHull), -1, Scalar.all(255), 2);
-//				MatOfInt convexHull2 = MatOperations.convexHull2(segmentedGoods, contours.get(0));
 				if (!joinedContours.empty()) {
 					MatOfPoint aprox = MatOperations.aproxCurve(joinedContours, 0.5, false);
 					if (!aprox.empty()) { 
 						MatOfInt convexHull2 = new MatOfInt();
 						Imgproc.convexHull(aprox, convexHull2);
-////						MatOfPoint convexHull = MatOperations.convexHull(segmentedHand, Arrays.asList(aprox));
-//						Imgproc.drawContours(segmentedHandSmall, Arrays.asList(aprox), -1, Scalar.all(255), 3);
-////	
-						int hpoints = convexHull2.checkVector(1, CvType.CV_32S);
-						int npoints = aprox.checkVector(2,CvType.CV_32S);
 						if (convexHull2.toArray().length > 2) {
 							MatOfInt4 convexDef = MatOperations.convexityDefects(aprox, convexHull2);
 							List <Integer>cdList = convexDef.toList(); 
@@ -262,20 +254,12 @@ public class MainController {
 						        Imgproc.circle(segmentedHandSmall, biggestEnd, 5, Scalar.all(255), 2);
 						        Imgproc.circle(segmentedHandSmall, biggestDefect, 5, Scalar.all(255), 2);
 						        MatOfPoint2f mop = new MatOfPoint2f(biggestStart, biggestEnd, biggestDefect);
-						        RotatedRect rotRect = Imgproc.minAreaRect(mop);
-						        Point [] points = new Point[4];
-						        rotRect.points(points);
-						        MatOperations.drawMinBoundingRect(segmentedHandSmall, points);
-						        System.out.println(rotRect.angle);
+//						        Imgproc.rectangle(segmentedHandSmall, biggestDefect, biggestEnd, Scalar.all(255));
+//						        RotatedRect rotRect = Imgproc.minAreaRect(mop);
+//						        Point [] points = new Point[4];
+//						        rotRect.points(points);
+//						        MatOperations.drawMinBoundingRect(segmentedHandSmall, points);
 						    }
-//						    if (defectsArr.length > 5) {
-////						    	Point center = new Point();
-////						    	float [] radius = new float[1];
-////						    	Imgproc.minEnclosingCircle(new MatOfPoint2f(defectsArr), center, radius);
-////						    	Imgproc.circle(segmentedHand, center, (int) radius[0], Scalar.all(0), 5);
-////						    	RotatedRect rotRect = Imgproc.fitEllipse(new MatOfPoint2f(defectsArr));
-////						    	Imgproc.ellipse(segmentedHand, rotRect, Scalar.all(0), 5);
-//						    }
 						}
 					}
 				}
@@ -319,27 +303,16 @@ public class MainController {
 			mog.apply(mat, new Mat());
 		}
 	}
-
-	private Rect findExtendedHandRegion(Mat mat) {
-		Mat result = MatOperations.dilate(mat, 10, 20);
-		Point [] points = new Point [4];
-		MatOfPoint mop = new MatOfPoint();
-		Core.findNonZero(result, mop);
-		Rect rect = Imgproc.boundingRect(mop);
-		return rect;
-	}
 	
-	private Mat roiBox(Mat mat, Mat preprocessed) {
+	private Mat drawRegionOfInterestRect(Mat mat, Mat preprocessed) {
 		Mat result = mat.clone();		
 		Mat workmat = preprocessed.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
 		Mat smallResult = mat.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
 		workmat = segmentHand(workmat, handThresholdSpinner.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
-		Rect rect = findExtendedHandRegion(workmat);
+		Rect rect = MatOperations.findExtendedRegion(workmat);
 		Imgproc.rectangle(smallResult, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), Scalar.all(255), 2 );
 
-		byte [] data = new byte[smallResult.channels()*smallResult.cols()*smallResult.rows()];
-		smallResult.get(0, 0, data);
-		result.put(CROP_OFFSET_Y, CROP_OFFSET_X, data);
+		MatOperations.replaceMatArea(result, smallResult, CROP_OFFSET_X, CROP_OFFSET_Y);
 		
 		return result;
 	}
@@ -441,9 +414,7 @@ public class MainController {
 
 		Core.bitwise_and(handMask, edges, edges);	
 //		edges = MatOperations.morphology(edges, false, true, erodeSpinner.getValue(), dilateSpinner.getValue(), morphIterSpinner.getValue());
-//		
-//		
-//		
+
 		List<MatOfPoint> contours = MatOperations.findContours(edges, 20);
 	    Imgproc.drawContours(roi, contours, -1, new Scalar(255, 0, 0), 2);
 		goodsContourFeatures(contours);
@@ -598,7 +569,7 @@ public class MainController {
 		
 		if (hullHandGoodsMainCheckbox.isSelected())	result = hullHandWithGoodsRegion(result, untouched);
 		if (hullGoodsMainCheckbox.isSelected()) result = hullGoodsRegion(result, untouched);
-		if (roiMainCheckbox.isSelected()) result = roiBox(result, preprocessed);
+		if (roiMainCheckbox.isSelected()) result = drawRegionOfInterestRect(result, preprocessed);
 		
 		return result;
 	}

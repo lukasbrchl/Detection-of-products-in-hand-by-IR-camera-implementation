@@ -13,6 +13,7 @@ import org.opencv.core.MatOfInt4;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.CLAHE;
@@ -22,7 +23,7 @@ import org.opencv.imgproc.Moments;
 import utils.ImageConvertor;
 
 public class MatOperations {
-	
+		
 	public static Mat createMat(byte [] byteArray, int width, int height, boolean scale, float min, float max, float interval) {		
 		Mat mat;
 		if (scale) mat = ImageConvertor.convertBinaryToMat(byteArray, width, height, min, max);
@@ -30,6 +31,16 @@ public class MatOperations {
 		else mat = ImageConvertor.convertBinaryToMat(byteArray, width, height);
 		return mat;
 	}
+	
+	public static Rect findExtendedRegion(Mat mat) {
+		Mat result = MatOperations.dilate(mat, 10, 20);
+		Point [] points = new Point [4];
+		MatOfPoint mop = new MatOfPoint();
+		Core.findNonZero(result, mop);
+		Rect rect = Imgproc.boundingRect(mop);
+		return rect;
+	}
+	
 	
 	public static Mat clache(Mat mat, double value1, double value2, double value3) {
 		Mat result = new Mat(mat.size(), mat.type()); 
