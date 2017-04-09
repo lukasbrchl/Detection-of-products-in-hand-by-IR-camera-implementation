@@ -117,7 +117,7 @@ public class MatOperations {
 		List<MatOfPoint> allContours = new ArrayList<MatOfPoint>();    
 		List<MatOfPoint> filteredContours = new ArrayList<MatOfPoint>();    
 		
-        Imgproc.findContours(mat, allContours,  new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(mat, allContours,  new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE);
         for (int i = 0; i < allContours.size(); i++) {
 //        	double countourArea = Imgproc.contourArea(allContours.get(i));	  
         	double countourArea = Imgproc.arcLength(new MatOfPoint2f(allContours.get(i).toArray()), false);

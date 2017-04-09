@@ -32,6 +32,7 @@ import data.reciever.WebcamDataReciever;
 import data.reciever.domain.Status;
 import data.reciever.service.FlirDataService;
 import data.reciever.service.WebcamService;
+import image.Contour;
 import image.MatOperations;
 import javafx.beans.property.DoubleProperty;
 import javafx.event.ActionEvent;
@@ -178,7 +179,8 @@ public class MainController {
 				Mat mainMat = processMainMat(scaledMat);			
 				Mat workMat = preprocessMat(scaledMat);				
 				Mat workCroppedMat = new Mat(workMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));				
-//
+
+
 //				Mat handMat = workCroppedMat.clone();				
 //				handMat = segmentHand(handMat, handThresholdSlider.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
 //				List <MatOfPoint> contours = MatOperations.findContours(handMat, contourMinSizeSpinner.getValue());
@@ -196,10 +198,9 @@ public class MainController {
 //					}
 //				}
 
-				if (print) System.out.println(";" + newValue.getFilename());
 				Mat handMat = new Mat(mainMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));				
 				Mat fgmask = new Mat();
-				mog.setVarThreshold(40);
+				mog.setVarThreshold(60);
 				mog.apply(handMat, fgmask, 0);
 				
 				fgmask = MatOperations.maskMat(workCroppedMat, fgmask);
@@ -216,57 +217,98 @@ public class MainController {
 					Imgproc.threshold(segmentedHandSmall, first, 220 , 255, Imgproc.THRESH_BINARY);
 					Imgproc.adaptiveThreshold(segmentedHandSmall, second, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY,1555, -210);
 					Core.bitwise_or(first, second, segmentedHandSmall);
+					Imgproc.dilate(segmentedHandSmall, segmentedHandSmall, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(9,9)));
 				}
 				
 				Mat segmentedHand = MatOperations.invert(segmentedHandFull);
 				fgmask.copyTo(segmentedGoods, segmentedHand);	
 				
-				contours = MatOperations.findContours(segmentedHandSmall, 0);
-				Point [] contoursPoints = new Point[0];
-				for (int i = 0; i < contours.size(); ++i) contoursPoints = Stream.concat(Arrays.stream(contoursPoints), Arrays.stream(contours.get(i).toArray())).toArray(Point[]::new);				
-				MatOfPoint joinedContours = new MatOfPoint(contoursPoints);
-				if (!joinedContours.empty()) {
-					MatOfPoint aprox = MatOperations.aproxCurve(joinedContours, 0.5, false);
-					if (!aprox.empty()) { 
-						MatOfInt convexHull2 = new MatOfInt();
-						Imgproc.convexHull(aprox, convexHull2);
-						if (convexHull2.toArray().length > 2) {
-							MatOfInt4 convexDef = MatOperations.convexityDefects(aprox, convexHull2);
-							List <Integer>cdList = convexDef.toList(); 
-							Point data[] = aprox.toArray();
-	
-							Point biggestDefect = null, biggestStart = null, biggestEnd = null;
-							int biggestSize = -1;
-						    for (int j = 0; j < cdList.size(); j = j+4) {
-						        Point start = data[cdList.get(j)];
-						        Point end = data[cdList.get(j+1)];
-						        Point defect = data[cdList.get(j+2)];
-						        int depth = cdList.get(j+3)/256;
-					            if (biggestSize < depth) {
-					            	biggestSize = depth;
-					            	biggestDefect = defect;
-					            	biggestStart = start;
-					            	biggestEnd = end;
-					            }
-						    }
-						    if (cdList.size() > 0) {
-						        Imgproc.circle(segmentedHandSmall, biggestStart, 5, Scalar.all(255), 2);
-						        Imgproc.circle(segmentedHandSmall, biggestEnd, 5, Scalar.all(255), 2);
-						        Imgproc.circle(segmentedHandSmall, biggestDefect, 5, Scalar.all(255), 2);
-						        MatOfPoint2f mop = new MatOfPoint2f(biggestStart, biggestEnd, biggestDefect);
-//						        Imgproc.rectangle(segmentedHandSmall, biggestDefect, biggestEnd, Scalar.all(255));
-//						        RotatedRect rotRect = Imgproc.minAreaRect(mop);
-//						        Point [] points = new Point[4];
-//						        rotRect.points(points);
-//						        MatOperations.drawMinBoundingRect(segmentedHandSmall, points);
-						    }
+				segmentedGoods = MatOperations.erode(segmentedGoods, 5, 5);
+				segmentedGoods = MatOperations.morphology(segmentedGoods, true, false, 5, 4, 5);
+				
+				
+				if (!isHandInShelf(fgmask)) {
+					contours = MatOperations.findContours(segmentedHandSmall, 0);
+					Point [] contoursPoints = new Point[0];
+					for (int i = 0; i < contours.size(); ++i) contoursPoints = Stream.concat(Arrays.stream(contoursPoints), Arrays.stream(contours.get(i).toArray())).toArray(Point[]::new);				
+					MatOfPoint joinedContours = new MatOfPoint(contoursPoints);
+					if (!joinedContours.empty()) {
+						MatOfPoint aprox = MatOperations.aproxCurve(joinedContours, 0.5, false);
+						if (!aprox.empty()) { 
+							MatOfInt convexHull2 = new MatOfInt();
+							Imgproc.convexHull(aprox, convexHull2);
+							if (convexHull2.toArray().length > 2) {
+								MatOfInt4 convexDef = MatOperations.convexityDefects(aprox, convexHull2);
+								List <Integer>cdList = convexDef.toList(); 
+								Point data[] = aprox.toArray();
+		
+								Point biggestDefect = null, biggestStart = null, biggestEnd = null;
+								int biggestSize = -1;
+							    for (int j = 0; j < cdList.size(); j = j+4) {
+							        Point start = data[cdList.get(j)];
+							        Point end = data[cdList.get(j+1)];
+							        Point defect = data[cdList.get(j+2)];
+							        int depth = cdList.get(j+3)/256;
+						            if (biggestSize < depth) {
+						            	biggestSize = depth;
+						            	biggestDefect = defect;
+						            	biggestStart = start;
+						            	biggestEnd = end;
+						            }
+							    }
+							    if (cdList.size() > 0 && biggestSize > 20 ) {
+							        Imgproc.circle(segmentedHandSmall, biggestStart, 5, Scalar.all(255), 2);
+							        Imgproc.circle(segmentedHandSmall, biggestEnd, 5, Scalar.all(255), 2);
+							        Imgproc.circle(segmentedHandSmall, biggestDefect, 5, Scalar.all(255), 2);
+							        
+							        Point p1 = new Point(), p2 = new Point(), p3 = new Point(), p4 = new Point();
+							        int length = 150;
+	   						        double angle = Math.atan2(biggestStart.y - biggestEnd.y, biggestStart.x - biggestEnd.x);
+					        
+							        p1.x = Math.round(biggestEnd.x + length * Math.cos(angle));
+							        p1.y = Math.round(biggestEnd.y + length * Math.sin(angle));
+							        p2.x = Math.round(biggestStart.x + -length * Math.cos(angle));
+							        p2.y = Math.round(biggestStart.y + -length * Math.sin(angle));
+							        
+							        p3.x = Math.round(biggestDefect.x + -length * Math.cos(angle));
+							        p3.y = Math.round(biggestDefect.y + -length * Math.sin(angle));
+							        p4.x = Math.round(biggestDefect.x + length * Math.cos(angle));
+							        p4.y = Math.round(biggestDefect.y + length * Math.sin(angle));
+							        
+							        p1.x += rect.x; p1.y += rect.y;p2.x += rect.x;p2.y += rect.y; 
+							        p3.x += rect.x;p3.y += rect.y;p4.x += rect.x;p4.y += rect.y;
+							        biggestStart.x += rect.x; biggestStart.y += rect.y;
+							        biggestEnd.x += rect.x; biggestEnd.y += rect.y;
+					                
+							        Imgproc.line(segmentedGoods, p3, p4, Scalar.all(0),3);
+							        Imgproc.line(segmentedGoods, p1, biggestStart, Scalar.all(0),3);
+							        Imgproc.line(segmentedGoods, p2, biggestEnd, Scalar.all(0),3);
+							    }
+							}
 						}
 					}
+					
+					segmentedGoods = MatOperations.erode(segmentedGoods, 3, 2);
+					
+					contours = MatOperations.findContours(segmentedGoods, 0);
+					List <MatOfPoint> filteredContours = new ArrayList<>();
+					for (MatOfPoint mop : contours) {
+						if (mop.toArray().length < 5) continue;
+						RotatedRect rotRect = Imgproc.fitEllipse(new MatOfPoint2f(mop.toArray()));
+						if (rotRect.size.width < 22 || rotRect.size.height < 22) continue;
+						Point [] points = new Point [4];
+						rotRect.points(points);
+						MatOperations.drawMinBoundingRect(segmentedGoods, points);
+						filteredContours.add(mop);
+					}
+					if(print && !isBackgroundOnly(workCroppedMat)) {
+						System.out.print(newValue.getFilename() + ";" );
+						goodsContourFeatures(filteredContours);
+						System.out.println("Hand with goods" );
+					}
 				}
-				
-				segmentedGoods = MatOperations.erode(segmentedGoods, 5, 5);
-				segmentedGoods = MatOperations.morphology(segmentedGoods, true, false, 5, 6, 5);
-//
+
+
 				//center
 				Image mainImage = ImageConvertor.convertMatToImage(mainMat);
 				Image mogImage = ImageConvertor.convertMatToImage(fgmask);
@@ -285,7 +327,7 @@ public class MainController {
 				Utils.updateFXControl(histogramImageView.imageProperty(), histogramImage);
 				Utils.updateFXControl(originalCroppedImageView.imageProperty(), originalCroppedImage);
 				
-				refreshBackground(workCroppedMat);
+				refreshBackground(mainMat);
 			});
 			fds.messageProperty().addListener((obs, oldValue, newValue) -> { 
 				streamStatusLabel.setText(newValue);
@@ -295,13 +337,26 @@ public class MainController {
 	}
 	
 	private void refreshBackground(Mat mat) {
-		Mat items = MatOperations.doCannyEdgeDetection(mat, 20, 40);
-		List <MatOfPoint> contours = MatOperations.findContours(items, 25);	
-		if (contours.size() == 0) {
-//			System.out.println("background");
+		if (isBackgroundOnly(mat)) {
+			System.out.println("background");
 			mog = Video.createBackgroundSubtractorMOG2(51, 200, true);
 			mog.apply(mat, new Mat());
 		}
+	}
+	
+	private boolean isBackgroundOnly(Mat mat) {
+		Mat items = MatOperations.doCannyEdgeDetection(mat, 30, 60);
+		List <MatOfPoint> contours = MatOperations.findContours(items, 25);	
+		return contours.size() == 0;
+	}
+	
+	private boolean isHandInShelf(Mat mat) {
+		Mat segmentedHand = segmentHand(mat, 220, 0, 0);
+		segmentedHand = MatOperations.erode(segmentedHand, 25, 10);
+		MatOfPoint mop = new MatOfPoint();
+		Core.findNonZero(segmentedHand, mop);
+		if (Imgproc.boundingRect(mop).height >= IMAGE_HEIGHT) return true;
+		return false;
 	}
 	
 	private Mat drawRegionOfInterestRect(Mat mat, Mat preprocessed) {
@@ -328,10 +383,10 @@ public class MainController {
 		List<MatOfPoint> contours = MatOperations.findContours(workmat, contourMinSizeSpinner.getValue());
 		MatOfPoint hullPoints  = MatOperations.convexHull(workmat, contours);
 		RotatedRect rotRect = Imgproc.minAreaRect(new MatOfPoint2f(hullPoints.toArray()));
-		if (print)
-		System.out.print(Imgproc.contourArea(hullPoints) + ";" + 
-		Imgproc.arcLength(new MatOfPoint2f(hullPoints.toArray()), true) + ";" +
-		rotRect.size.area() + ";" );
+//		if (print)
+//		System.out.print(Imgproc.contourArea(hullPoints) + ";" + 
+//		Imgproc.arcLength(new MatOfPoint2f(hullPoints.toArray()), true) + ";" +
+//		rotRect.size.area() + ";" );
 		Imgproc.drawContours(handRegionPreprocessed, Arrays.asList(hullPoints), -1, Scalar.all(255), 2);        
 		
 		if (!handRegionPreprocessed.equals(workmat)) 
@@ -362,10 +417,10 @@ public class MainController {
 		hullPoints = MatOperations.convexHull(withoutHand,Arrays.asList(mop));
 		if (hullPoints == null) hullPoints = new MatOfPoint();
 		RotatedRect rotRect = Imgproc.minAreaRect(new MatOfPoint2f(hullPoints.toArray()));
-		if (print)
-		System.out.print(Imgproc.contourArea(hullPoints) + ";" + 
-				Imgproc.arcLength(new MatOfPoint2f(hullPoints.toArray()), true) + ";" +
-				rotRect.size.area() + ";" );
+//		if (print)
+//		System.out.print(Imgproc.contourArea(hullPoints) + ";" + 
+//				Imgproc.arcLength(new MatOfPoint2f(hullPoints.toArray()), true) + ";" +
+//				rotRect.size.area() + ";" );
 		Imgproc.drawContours(handRegionPreprocessed, Arrays.asList(hullPoints), -1, Scalar.all(255), 2);        
 		
 		if (!withoutHand.equals(handRegionPreprocessed)) {
@@ -423,10 +478,7 @@ public class MainController {
 	
 	private Mat segmentHand(Mat mat, double threshold, double dilation, double iterations) {
 		Mat result = new Mat(mat.size(), mat.type());	    
-//		result = MatOperations.dilate(mat, dilation, (int) iterations);		
 		result =  MatOperations.binaryTreshold(mat, threshold);
-//		result = MatOperations.erode(result, dilation, (int) iterations);
-//		result = MatOperations.otsuThreshold(result, threshold);
 		return result;
 	}
 	
@@ -474,15 +526,38 @@ public class MainController {
 		return result;
 	}
 	
-	private void goodsContourFeatures(List <MatOfPoint> mopList) {
+	private void goodsContourFeatures(List <MatOfPoint> contours) {
 		if (!print) return;
-		int contoursCount = mopList.size();
+		MatOfPoint biggest = MatOperations.findBiggestContour(contours);
+		//biggest
+		float length = 0, area = 0, minDiameter = 0, maxDiameter = 0, convexLength = 0, convexArea = 0, formFactor = 0,
+				roundness = 0, aspectRatio = 0, convexity = 0, solidity = 0, compactness = 0, extent = 0;	
+		if (biggest != null && biggest.toArray().length>0) {
+			Contour contour = new Contour(biggest);
+			length = (float) contour.getLength();
+			area = (float) contour.getArea();
+			minDiameter = (float) contour.getMinDiameter();
+			maxDiameter = (float) contour.getMaxDiameter();
+			convexLength = (float) contour.getConvexLength();
+			convexArea = (float) contour.getConvexArea();
+			formFactor = (float) contour.getFormFactor();
+			roundness = (float) contour.getRoundness();
+			aspectRatio = (float) contour.getAspectRatio();
+			convexity = (float) contour.getConvexity();
+			solidity = (float) contour.getSolidity();
+			compactness = (float) contour.getCompactness();
+			extent = (float) contour.getExtent();
+		}
+		System.out.print(length + ";" +  area + ";" + minDiameter + ";" + maxDiameter + ";" + convexLength + ";" + convexArea + ";" + formFactor
+				+ ";" + roundness + ";" + aspectRatio + ";" + convexity + ";" + solidity + ";" + compactness + ";" + extent + ";");
+		
+		//contours overall
+		int contoursCount = contours.size();
 		float areaSum=0, areaMin = Float.MAX_VALUE, areaMax = 0, areaAvg = 0;
 		float lengthSum=0, lengthMin = Float.MAX_VALUE, lengthMax = 0, lengthAvg = 0;
-
-		for (MatOfPoint mop : mopList) {
-			float area = (float) Imgproc.contourArea(mop);
-			float length = (float) Imgproc.arcLength(new MatOfPoint2f(mop.toArray()), false);
+		for (MatOfPoint mop : contours) {
+			area = (float) Imgproc.contourArea(mop);
+			length = (float) Imgproc.arcLength(new MatOfPoint2f(mop.toArray()), false);
 			areaSum += area;
 			lengthSum += length;
 			if (areaMin > area) areaMin = area;
@@ -492,8 +567,8 @@ public class MainController {
 		}
 		areaAvg = contoursCount != 0 ? areaSum/contoursCount : 0 ;
 		lengthAvg = contoursCount != 0 ? lengthSum/contoursCount : 0;
-		System.out.print(contoursCount + ";" +  lengthMin + ";" + lengthMax + ";" + lengthSum + ";" + lengthAvg + ";" + areaMin + ";" + areaMax + ";" + areaSum + ";" + areaAvg);
-		System.out.print(";" + flirDummyFolder.getFileName().toString());
+		System.out.print(contoursCount + ";" +  lengthMin + ";" + lengthMax + ";" + lengthSum + ";" + lengthAvg + ";" + areaMin + ";" + areaMax + ";" + areaSum + ";" + areaAvg + ";");
+//		System.out.print(";" + flirDummyFolder.getFileName().toString());
 	}
 	
 	@FXML
