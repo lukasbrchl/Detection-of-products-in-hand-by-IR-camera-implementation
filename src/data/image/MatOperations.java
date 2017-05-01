@@ -219,38 +219,55 @@ public class MatOperations {
         return result;
 	}
 	
-	public static Mat morphology(Mat mat, boolean open, boolean close, double erodeValue, double dilateValue, double iterations) {
-		Mat result = mat.clone();
-		if ((int) erodeValue % 2 == 0) erodeValue++;
-		if ((int) dilateValue % 2 == 0) dilateValue++;
+//	public static Mat morphology(Mat mat, boolean open, boolean close, double erodeValue, double dilateValue, double iterations) {
+//		Mat result = mat.clone();
+//		if ((int) erodeValue % 2 == 0) erodeValue++;
+//		if ((int) dilateValue % 2 == 0) dilateValue++;
+//
+////	    Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(erodeValue,erodeValue));
+//		for (int i = 0; i < (int) iterations; ++i) {
+//		    if (!close) {
+//	//			result = MatOperations.erode(mat, erodeValue);
+//	//			result = MatOperations.dilate(result, dilateValue);
+//			} else {
+//			    Imgproc.morphologyEx(result, result, Imgproc.MORPH_CLOSE, dilateElement);
+//	//			result = MatOperations.dilate(mat, dilateValue);
+//	//			result = MatOperations.erode(result, erodeValue);
+//			}
+//		}
+//		return result;
+//	}
+	
+	public static Mat morphOpen(Mat mat, double dSize, double iterations) {
+		Mat result = new Mat(mat.size(), mat.type());
+		int size = (int) dSize;
+		if (size % 2 == 0) ++size;
+	    Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(size,size));
 
-//	    Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(erodeValue,erodeValue));
-	    Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(dilateValue,dilateValue));
-		for (int i = 0; i < (int) iterations; ++i) {
-		    if (!close) {
-			    Imgproc.morphologyEx(result, result, Imgproc.MORPH_OPEN, dilateElement);
-	//			result = MatOperations.erode(mat, erodeValue);
-	//			result = MatOperations.dilate(result, dilateValue);
-			} else {
-			    Imgproc.morphologyEx(result, result, Imgproc.MORPH_CLOSE, dilateElement);
-	//			result = MatOperations.dilate(mat, dilateValue);
-	//			result = MatOperations.erode(result, erodeValue);
-			}
-		}
+		for (int i = 0; i < (int) iterations; ++i) 
+			Imgproc.morphologyEx(mat, result, Imgproc.MORPH_OPEN, element);
+		return result;
+	}
+	
+	public static Mat morphClose(Mat mat, double dSize, double iterations) {
+		Mat result = new Mat(mat.size(), mat.type());
+		int size = (int) dSize;
+		if (size % 2 == 0) ++size;
+	    Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(size,size));
+
+		for (int i = 0; i < (int) iterations; ++i) 
+			Imgproc.morphologyEx(mat, result, Imgproc.MORPH_CLOSE, element);
 		return result;
 	}
 	
 	public static Mat dilate(Mat mat, double dSize, double iterations) {
-//		Mat result = new Mat(mat.size(), mat.type());
-		Mat result = mat.clone();
-
+		Mat result = new Mat(mat.size(), mat.type());
 		int size = (int) dSize;
 		if (size % 2 == 0) ++size;
 	    Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(size,size));
-//	    Imgproc.dilate(mat, result, element, new Point(), (int) iterations);
-	    for (int i = 0; i < (int) iterations; ++i)
-	    	Imgproc.dilate(result, result, element);
 
+	    for (int i = 0; i < (int) iterations; ++i)
+	    	Imgproc.dilate(mat, result, element);
 	    return result;
 	}
 	
@@ -258,8 +275,9 @@ public class MatOperations {
 		Mat result = new Mat(mat.size(), mat.type());
 		int size = (int) dSize;
 		if (size % 2 == 0) ++size;
-	    Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(size,size));
-	    Imgproc.erode(mat, result, element);
+	    Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(size,size));	    
+	    for (int i = 0; i < (int) iterations; ++i)
+	    	Imgproc.erode(mat, result, element);
 	    return result;
 	}
 	

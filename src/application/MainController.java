@@ -27,6 +27,7 @@ import org.opencv.objdetect.Objdetect;
 import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.video.Video;
 
+import data.image.AlgHelper;
 import data.image.ImageConvertor;
 import data.image.MatOperations;
 import data.image.domain.Contour;
@@ -57,19 +58,13 @@ import utils.Utils;
 public class MainController {
 	public static final int IMAGE_WIDTH = 640;
 	public static final int IMAGE_HEIGHT = 150;
-	public static final int IMAGE_CROPPED_WIDTH = 640;
-	public static final int IMAGE_CROPPED_HEIGHT = 150;
 	public static final int PANEL_IMAGE_WIDTH = 160;
-	public static final int PANEL_IMAGE_HEIGHT = 128;
-	public static final int PANEL_CROPPED_IMAGE_WIDTH = 160;
-	public static final int PANEL_CROPPED_IMAGE_HEIGHT = 37;	
-	public static final int CROP_OFFSET_X = 0;
-	public static final int CROP_OFFSET_Y = 0;
+	public static final int PANEL_IMAGE_HEIGHT = 37;
 
 	//Main container
 	@FXML private BorderPane mainBorderPane;
 	//Image containers
-	@FXML private ImageView mainImageView, mogImageView, handImageView, goodsImageView, originalImageView, histogramImageView, originalCroppedImageView;
+	@FXML private ImageView mainImageView, helperImageView, handImageView, goodsImageView, originalImageView, histogramImageView, originalCroppedImageView;
 	//Stream buttons
 	@FXML private Button connectToStreamButton, readStreamButton, closeStreamButton, pauseStreamButton;
 	@FXML private AnchorPane openPausePane;
@@ -159,37 +154,29 @@ public class MainController {
 			fds = new FlirDataService(flirDataReciever);
 			fds.valueProperty().addListener((obs, oldValue, newValue) -> { 
 				printInfo = false;
-				byte [] originalByteArray = newValue.getData();
-				byte [] croppedByteArray = new byte[IMAGE_CROPPED_WIDTH*IMAGE_CROPPED_HEIGHT*2];				
-		 	    System.arraycopy(originalByteArray, CROP_OFFSET_Y * IMAGE_WIDTH * 2, croppedByteArray, 0,IMAGE_CROPPED_WIDTH*IMAGE_CROPPED_HEIGHT*2);  
-		 	    float origMin = ImageConvertor.bytesToCelsius(ImageConvertor.getMin(croppedByteArray));
-		 	    float origMax = ImageConvertor.bytesToCelsius(ImageConvertor.getMax(croppedByteArray));
-		 	    Mat originalMat, originalCroppedMat, scaledMat, scaledCroppedMat;		     
+				byte [] byteArray = newValue.getData();
+		 	    Mat originalMat, scaledMat, mainMat, workMat;		     
 
-				originalMat = MatOperations.createMat(originalByteArray, IMAGE_WIDTH, IMAGE_HEIGHT, false, minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
+				originalMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, false, minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
 				if (scaleTempCheckbox.isSelected())
-					scaledMat = MatOperations.createMat(originalByteArray, IMAGE_WIDTH, IMAGE_HEIGHT, scaleTempCheckbox.isSelected(), minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
+					scaledMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, scaleTempCheckbox.isSelected(), minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
 				else 
-					scaledMat = MatOperations.createMat(originalByteArray, IMAGE_WIDTH, IMAGE_HEIGHT, true, origMin , origMax, -1);
+					scaledMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, true, ImageConvertor.bytesToCelsius(ImageConvertor.getMin(byteArray)) , ImageConvertor.bytesToCelsius(ImageConvertor.getMax(byteArray)), -1);
 
-				originalCroppedMat = new Mat(originalMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));
-				Mat mainMat = processMainMat(scaledMat);			
-				Mat workMat = preprocessMat(scaledMat);				
-				Mat workCroppedMat = new Mat(workMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));				
+				mainMat = processMainMat(scaledMat);			
+				workMat = preprocessMat(scaledMat);				
 				
-				detectUsingMog(mainMat, workCroppedMat);
-
-
-				
+//				detectUsingMog(mainMat, workMat);
+				detectUsingEdges(workMat);
 
 
 				Utils.updateFXControl(mainImageView.imageProperty(), ImageConvertor.convertMatToImage(mainMat));
 				Utils.updateFXControl(originalImageView.imageProperty(), ImageConvertor.convertMatToImage(originalMat));
 				Utils.updateFXControl(histogramImageView.imageProperty(), ImageConvertor.convertMatToImage(MatOperations.createHistogram(workMat)));
-				Utils.updateFXControl(originalCroppedImageView.imageProperty(), ImageConvertor.convertMatToImage(originalCroppedMat));
+				Utils.updateFXControl(originalCroppedImageView.imageProperty(), ImageConvertor.convertMatToImage(originalMat));
 				
-				refreshBackground(mainMat);
-				if(printInfo && !isBackgroundOnly(workCroppedMat)) System.out.print(newValue.getFilename() + ";" );				
+				refreshBackground(mainMat, printInfo);
+				if(printInfo && !isBackgroundOnly(workMat)) System.out.print(newValue.getFilename() + ";" );				
 			});
 			
 			fds.messageProperty().addListener((obs, oldValue, newValue) -> { 
@@ -201,14 +188,14 @@ public class MainController {
 	}
 	
 
-	private void detectUsingEdges(Mat workCroppedMat) {
-		Mat handMat = workCroppedMat.clone();				
-		handMat = segmentHand(handMat, handThresholdSlider.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
+	private void detectUsingEdges(Mat workMat) {
+		Mat handMat = workMat.clone();				
+		handMat = AlgHelper.segmentHandBinary(handMat, handThresholdSlider.getValue());
 		List <MatOfPoint> contours = MatOperations.findContours(handMat, contourMinSizeSpinner.getValue());
 		MatOfPoint biggest = MatOperations.findBiggestContour(contours);
 		
 		if (contours.size() > 0 && Imgproc.contourArea(biggest) > 100) {
-			Mat croppedEdgesMat = workCroppedMat.clone();						
+			Mat croppedEdgesMat = workMat.clone();						
 			Rect rect = MatOperations.findExtendedRegion(handMat);
 			Imgproc.rectangle(handMat, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), Scalar.all(255));
 	
@@ -217,16 +204,20 @@ public class MainController {
 				Utils.updateFXControl(goodsImageView.imageProperty(), ImageConvertor.convertMatToImage(croppedEdgesMat));			
 			}
 		}
+		Utils.updateFXControl(handImageView.imageProperty(), ImageConvertor.convertMatToImage(handMat));	
+		Utils.updateFXControl(helperImageView.imageProperty(), ImageConvertor.convertMatToImage(workMat));			
+
+
 	}
 	
-	private void detectUsingMog(Mat mainMat, Mat workCroppedMat) {
+	private void detectUsingMog(Mat mainMat, Mat workMat) {
 
-		Mat handMat = new Mat(mainMat, new Rect(CROP_OFFSET_X, CROP_OFFSET_Y, IMAGE_CROPPED_WIDTH, IMAGE_CROPPED_HEIGHT));				
+		Mat handMat = mainMat.clone();		
 		Mat fgmask = new Mat();
 		mog.setVarThreshold(80);
 		mog.apply(handMat, fgmask, 0);
 		
-		fgmask = MatOperations.maskMat(workCroppedMat, fgmask);
+		fgmask = MatOperations.maskMat(workMat, fgmask);
 		
 		Mat segmentedGoods = Mat.zeros(fgmask.size(), fgmask.type()); 
 		Mat segmentedHandSmall = Mat.zeros(fgmask.size(), fgmask.type()); 
@@ -324,20 +315,20 @@ public class MainController {
 				MatOperations.drawMinBoundingRect(segmentedGoods, points);
 				filteredContours.add(mop);
 			}
-			if(printInfo && !isBackgroundOnly(workCroppedMat)) {
+			if(printInfo && !isBackgroundOnly(workMat)) {
 //				goodsContourFeatures(filteredContours);
 //				System.out.println("Hand with goods" );
 			}
 		}
 
-		Utils.updateFXControl(mogImageView.imageProperty(), ImageConvertor.convertMatToImage(fgmask));			
+		Utils.updateFXControl(helperImageView.imageProperty(), ImageConvertor.convertMatToImage(fgmask));			
 		Utils.updateFXControl(handImageView.imageProperty(), ImageConvertor.convertMatToImage(segmentedHandFull));
 		Utils.updateFXControl(goodsImageView.imageProperty(), ImageConvertor.convertMatToImage(segmentedGoods));			
 	}
 	
-	private void refreshBackground(Mat mat) {
+	private void refreshBackground(Mat mat, boolean printInfo) {
 		if (isBackgroundOnly(mat)) {
-//			System.out.println("background");
+			if (printInfo) System.out.println("background");
 			mog = Video.createBackgroundSubtractorMOG2(51, 200, true);
 			mog.apply(mat, new Mat());
 		}
@@ -350,7 +341,7 @@ public class MainController {
 	}
 	
 	private boolean isHandInShelf(Mat mat) {
-		Mat segmentedHand = segmentHand(mat, 220, 0, 0);
+		Mat segmentedHand = AlgHelper.segmentHandBinary(mat, 220);
 		segmentedHand = MatOperations.erode(segmentedHand, 25, 10);
 		MatOfPoint mop = new MatOfPoint();
 		Core.findNonZero(segmentedHand, mop);
@@ -358,22 +349,22 @@ public class MainController {
 		return false;
 	}
 	
-	private Mat drawRegionOfInterestRect(Mat mat, Mat preprocessed) {
+	private Mat drawRegionOfInterestRect(Mat mat, Mat preprocessed) { //FIXME: repair
 		Mat result = mat.clone();		
-		Mat workmat = preprocessed.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
-		Mat smallResult = mat.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
-		workmat = segmentHand(workmat, handThresholdSpinner.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
-		Rect rect = MatOperations.findExtendedRegion(workmat);
-		Imgproc.rectangle(smallResult, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), Scalar.all(255), 2 );
-
-		MatOperations.replaceMatArea(result, smallResult, CROP_OFFSET_X, CROP_OFFSET_Y);
+//		Mat workmat = preprocessed.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
+//		Mat smallResult = mat.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
+//		workmat = segmentHand(workmat, handThresholdSpinner.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
+//		Rect rect = MatOperations.findExtendedRegion(workmat);
+//		Imgproc.rectangle(smallResult, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), Scalar.all(255), 2 );
+//
+//		MatOperations.replaceMatArea(result, smallResult, CROP_OFFSET_X, CROP_OFFSET_Y);
 		
 		return result;
 	}
 	
 	private Mat hullHandWithGoodsRegion(Mat mat, Mat untouched) {
 		Mat result = mat.clone();
-		Mat workmat = untouched.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
+		Mat workmat = untouched.clone();
 		workmat = preprocessMat(workmat);
 		Mat handRegionPreprocessed = workmat.clone();
 
@@ -388,26 +379,25 @@ public class MainController {
 //		rotRect.size.area() + ";" );
 		Imgproc.drawContours(handRegionPreprocessed, Arrays.asList(hullPoints), -1, Scalar.all(255), 2);        
 		
-		if (!handRegionPreprocessed.equals(workmat)) 
-			MatOperations.replaceMatArea(result, handRegionPreprocessed, CROP_OFFSET_X,  CROP_OFFSET_Y);
+		if (!handRegionPreprocessed.equals(workmat)) result = handRegionPreprocessed;
 		return result;
 	}	
 		
 	private Mat hullGoodsRegion(Mat mat, Mat untouched) {
 		Mat result = mat.clone();
-		Mat handRegionPreprocessed = mat.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
-		Mat workmat = untouched.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
+		Mat handRegionPreprocessed = mat.clone();
+		Mat workmat = untouched.clone();
 		workmat = preprocessMat(workmat);
 		Mat withoutHand = new Mat(workmat.size(), workmat.type()); 
 
 		workmat = MatOperations.doCannyEdgeDetection(workmat, cannyEdge1Spinner.getValue() , cannyEdge2Spinner.getValue()); //detect edges
-		workmat = MatOperations.morphology(workmat, morphOpenCheckbox.isSelected(), morphCloseCheckbox.isSelected(), erodeSpinner.getValue(), dilateSpinner.getValue(), morphIterSpinner.getValue());
+//		workmat = MatOperations.morphology(workmat, morphOpenCheckbox.isSelected(), morphCloseCheckbox.isSelected(), erodeSpinner.getValue(), dilateSpinner.getValue(), morphIterSpinner.getValue());
 		List <MatOfPoint> contours = MatOperations.findContours(workmat, contourMinSizeSpinner.getValue()); //find contours + filter them
 		MatOfPoint hullPoints = MatOperations.convexHull(workmat, contours); //draw convex hull mask
 		Mat convexHull = new Mat(workmat.size(),workmat.type(), Scalar.all(0));
 		Imgproc.drawContours(convexHull, Arrays.asList(hullPoints), -1, Scalar.all(255), Core.FILLED);        
 
-		Mat segmentedHand = segmentHand(handRegionPreprocessed, 220, 4, 3); //find hand mask
+		Mat segmentedHand = AlgHelper.segmentHandBinary(handRegionPreprocessed, 220); //find hand mask
 		
 		Core.subtract(convexHull, segmentedHand, withoutHand); //Mat without hand but with noise
 
@@ -422,9 +412,7 @@ public class MainController {
 //				rotRect.size.area() + ";" );
 		Imgproc.drawContours(handRegionPreprocessed, Arrays.asList(hullPoints), -1, Scalar.all(255), 2);        
 		
-		if (!withoutHand.equals(handRegionPreprocessed)) {
-			MatOperations.replaceMatArea(result, handRegionPreprocessed, CROP_OFFSET_X,  CROP_OFFSET_Y);			
-		}
+		if (!withoutHand.equals(handRegionPreprocessed)) result = handRegionPreprocessed;		
 		
 		return result;
 	}	
@@ -434,14 +422,16 @@ public class MainController {
 		Mat withoutHand = new Mat(mat.size(), mat.type()); 
 
 		result = MatOperations.doCannyEdgeDetection(mat, cannyThresh1 , cannyThresh2); //detect edges
-		result = MatOperations.morphology(result, open, close, erode, dilate, morphIterSpinner.getValue());
+//		result = MatOperations.morphology(result, open, close, erode, dilate, morphIterSpinner.getValue());
+//		result = MatOperations.morphClose(edges, 3, 5);
+
 		
 		List <MatOfPoint> contours = MatOperations.findContours(result, contourMinSize); //find contours + filter them
 		MatOfPoint hullPoints = MatOperations.convexHull(result,contours); //draw convex hull mask
 		Mat convexHull = new Mat(mat.size(),mat.type(), Scalar.all(0));
 		Imgproc.drawContours(convexHull, Arrays.asList(hullPoints), -1, Scalar.all(255), Core.FILLED);        
 		
-		Mat segmentedHandMask = segmentHand(original, handThreshold, handDilationSpinner.getValue(), handIterSpinner.getValue()); //find hand mask
+		Mat segmentedHandMask = AlgHelper.segmentHandBinary(original, handThreshold); //find hand mask
 		
 		Core.subtract(convexHull, segmentedHandMask, withoutHand); //Mat without hand but with noise
 		result = MatOperations.maskMat(original, withoutHand);  //masked original image - only goods + noise remains	
@@ -458,13 +448,13 @@ public class MainController {
 	private Mat segmentGoods2(Mat mat, Rect rect) {
 		Mat roi = mat.submat(rect);
 		Mat edges = new Mat(roi.size(), roi.type());
-		Mat handMask = segmentHand(roi, handThresholdSlider.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
+		Mat handMask = AlgHelper.segmentHandBinary(roi, handThresholdSlider.getValue());
 		
 		handMask = MatOperations.invert(handMask);
 		edges = MatOperations.doCannyEdgeDetection(roi, cannyEdge1Spinner.getValue() , cannyEdge2Spinner.getValue()); //detect edges
 //		edges = MatOperations.dilate(edges, 3, 2);
 //		edges = MatOperations.erode(edges, 6, 1);
-		edges = MatOperations.morphology(edges, false, true, 3, 3, 5);
+		edges = MatOperations.morphClose(edges, 3, 5);
 
 		Core.bitwise_and(handMask, edges, edges);	
 //		edges = MatOperations.morphology(edges, false, true, erodeSpinner.getValue(), dilateSpinner.getValue(), morphIterSpinner.getValue());
@@ -475,11 +465,7 @@ public class MainController {
 		return mat;
 	}	
 	
-	private Mat segmentHand(Mat mat, double threshold, double dilation, double iterations) {
-		Mat result = new Mat(mat.size(), mat.type());	    
-		result =  MatOperations.binaryTreshold(mat, threshold);
-		return result;
-	}
+
 	
 	private Mat segmentHand2(Mat mat, int i, int j, int k, int l) {
 		Mat result = new Mat(mat.size(), mat.type());
@@ -599,12 +585,8 @@ public class MainController {
 	//right panel
 	@FXML
 	protected void saveImagesCheckboxClicked(ActionEvent event) {
-		if (saveImagesCheckbox.isSelected())  {
-			flirDataReciever.setSaveImages(true);
-		}
-		else {
-			flirDataReciever.setSaveImages(false);
-		}
+		if (saveImagesCheckbox.isSelected()) flirDataReciever.setSaveImages(true);
+		else flirDataReciever.setSaveImages(false);		
 	}
 	//helper methods
 	
@@ -635,13 +617,11 @@ public class MainController {
 		if ((brightnessSpinner.getValue() != 0 || contrastSpinner.getValue() != 0) && exposureMainCheckbox.isSelected()) result = MatOperations.brightnessContrast(result, brightnessSpinner.getValue(), contrastSpinner.getValue());
 		if ((addSpinner.getValue() != 0 || multSpinner.getValue() != 0) && exposureMainCheckbox.isSelected()) result=  MatOperations.addMult(result, addSpinner.getValue(), multSpinner.getValue());
 		if (blurCheckbox.isSelected() && blurMainCheckbox.isSelected()) result = MatOperations.blurImage(result, blur1Spinner.getValue(), blur2Spinner.getValue(), blurSigmaSpinner.getValue());	
-		Mat preprocessed = result.clone();
 		if (cannyMainCheckbox.isSelected()) result = MatOperations.doCannyEdgeDetection(result, cannyEdge1Spinner.getValue(), cannyEdge2Spinner.getValue());
-		if (morphologyMainCheckbox.isSelected()) result = MatOperations.morphology(result, morphOpenCheckbox.isSelected(), morphCloseCheckbox.isSelected(), erodeSpinner.getValue(), dilateSpinner.getValue(), morphIterSpinner.getValue());
+//		if (morphologyMainCheckbox.isSelected()) result = MatOperations.morphology(result, morphOpenCheckbox.isSelected(), morphCloseCheckbox.isSelected(), erodeSpinner.getValue(), dilateSpinner.getValue(), morphIterSpinner.getValue());
 		
 		if (hullHandGoodsMainCheckbox.isSelected())	result = hullHandWithGoodsRegion(result, untouched);
 		if (hullGoodsMainCheckbox.isSelected()) result = hullGoodsRegion(result, untouched);
-		if (roiMainCheckbox.isSelected()) result = drawRegionOfInterestRect(result, preprocessed);
 		
 		return result;
 	}
