@@ -7,6 +7,7 @@ import java.util.List;
 import org.opencv.core.Mat;
 
 import application.MainController;
+import data.image.ImageConvertor;
 import data.reciever.FlirDataReciever;
 import data.reciever.domain.DataPayload;
 import data.reciever.domain.ImageData;
@@ -15,7 +16,6 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
-import utils.ImageConvertor;
 import utils.Utils;
 
 public class FlirDataService extends Service<ImageData> {

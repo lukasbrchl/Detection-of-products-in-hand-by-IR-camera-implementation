@@ -4,6 +4,7 @@ public class ImageData {
 	
 	private final byte [] data;
 	private final String filename;
+	
 	//define own header with metadata
 //	private int bytesPerPixel;
 //	private int widht;

@@ -1,4 +1,4 @@
-package image;
+package data.image;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,8 +19,6 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
-
-import utils.ImageConvertor;
 
 public class MatOperations {
 		
@@ -77,8 +75,6 @@ public class MatOperations {
 		Mat resultMat = new Mat();
 		Mat medianMat = new Mat();
 		
-		
-//		Imgproc.GaussianBlur(mat, resultMat, new Size(size1, size2), sigma);
 		Imgproc.medianBlur(mat, medianMat,13);
 //		Imgproc.GaussianBlur(medianMat, resultMat, new Size(size1, size2), sigma);
 		Imgproc.bilateralFilter(medianMat, resultMat, (int) sigma, size1, size2);

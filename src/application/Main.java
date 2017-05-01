@@ -11,9 +11,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 public class Main extends Application{
-	public static final float MIN_TEMP = 26.0f;
-	public static final float MAX_TEMP = 36.0f;
-	
+
 	@Override
 	public void start(Stage primaryStage) {
 		try {
@@ -37,7 +35,6 @@ public class Main extends Application{
 		}
 	}
 	
-
 	public static void main(String[] args) {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME); //load OpenCV		
 		launch(args);

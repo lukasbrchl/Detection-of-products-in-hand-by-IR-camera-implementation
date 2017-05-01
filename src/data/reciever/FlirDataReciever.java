@@ -34,7 +34,6 @@ public class FlirDataReciever extends DataReciever<DataPayload> {
 	private final int bytesToRecieve; //shouldn't change while recieving
 	private String hostName;
 	private final int port;
-	private DataPayload latestBuffer;
 	
 	public FlirDataReciever (String hostName, int port, int bytesToRecieve, int playbackSpeed) {
 		super();
