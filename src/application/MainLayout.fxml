@@ -350,7 +350,9 @@
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
-                  <MenuItem fx:id="loadFromFolder" mnemonicParsing="false" onAction="#loadFromFolderClicked" text="Load from folder" />
+                  <MenuItem fx:id="loadFilesFromFolder" mnemonicParsing="false" onAction="#loadFilesFromFolderClicked" text="Load files from folder" />
+                  <MenuItem fx:id="loadPreprocesSettings" mnemonicParsing="false" onAction="#loadPreprocesSettingsClicked" text="Load preprocessing settings" />
+                  <MenuItem fx:id="storePreprocesSettings" mnemonicParsing="false" onAction="#storePreprocesSettingsClicked" text="Store preprocessing settings" />
               <MenuItem mnemonicParsing="false" text="Close" />
             </items>
           </Menu>

@@ -1,7 +1,9 @@
 package application;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +29,8 @@ import org.opencv.objdetect.Objdetect;
 import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.video.Video;
 
+import data.algorithm.params.PreprocessingSettings;
+import data.algorithm.params.SettingsManager;
 import data.image.AlgHelper;
 import data.image.ImageConvertor;
 import data.image.MatOperations;
@@ -36,7 +40,10 @@ import data.reciever.WebcamDataReciever;
 import data.reciever.domain.Status;
 import data.reciever.service.FlirDataService;
 import data.reciever.service.WebcamService;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button ;
@@ -99,17 +106,19 @@ public class MainController {
 	@FXML private CheckBox  exposureMainCheckbox, blurMainCheckbox, cannyMainCheckbox, morphologyMainCheckbox, hullHandGoodsMainCheckbox, hullGoodsMainCheckbox, roiMainCheckbox;
 	
 	@FXML private Spinner<Double> optionalSpinner, optionalSpinner2, optionalSpinner3, optionalSpinner4, optionalSpinner5;
-	@FXML private MenuItem loadFromFolder;
+	@FXML private MenuItem loadFilesFromFolder, loadPreprocesSettings, storePreprocesSettings;
 	
 	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty,  binaryThresholdDoubleProperty;  //prevents GC from cleaning weak listeners
 	private FlirDataService fds;
 	private FlirDataReciever flirDataReciever;
 	private Path flirDummyFolder;
-	private boolean printInfo;
-	private BackgroundSubtractorMOG2 mog;
+	private boolean printInfo;	
+	private BackgroundSubtractorMOG2 mog = Video.createBackgroundSubtractorMOG2(MOG_HISTORY, MOG_THRESHOLD, true);
 	
 	private static final int MOG_THRESHOLD = 80;
 	private static final int MOG_HISTORY = 50;
+	
+	private PreprocessingSettings ps = new PreprocessingSettings();
 
 	public MainController() {
 	}
@@ -125,19 +134,55 @@ public class MainController {
 	 }
 	 
 	 @FXML 
-	 public void loadFromFolderClicked(ActionEvent event) throws IOException {
+	 public void loadFilesFromFolderClicked(ActionEvent event) throws IOException {
 		DirectoryChooser directoryChooser = new DirectoryChooser();
 		directoryChooser.setInitialDirectory(new File("D:\\ThesisProjectImages\\"));
 		File file = directoryChooser.showDialog(mainBorderPane.getScene().getWindow());
 		if (file != null) {
 			flirDummyFolder = file.toPath();
 			flirDataReciever.initDummyHost(flirDummyFolder);
-			readStream(event);
-
+			readStream(event);			
 		}
-		mog = Video.createBackgroundSubtractorMOG2(MOG_HISTORY, MOG_THRESHOLD, true);
+	 }
+	 
+	 @FXML 
+	 public void loadPreprocesSettingsClicked(ActionEvent event) {
+		 if (flirDummyFolder == null) return;
+		 ps = SettingsManager.loadPreproc(flirDummyFolder.toAbsolutePath().toString());
+		 bindPreprocessSettings();
 	 }
 
+	private void bindPreprocessSettings() {
+		 DoubleProperty.doubleProperty(minTempSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getTempMinProp());
+		 DoubleProperty.doubleProperty(maxTempSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getTempMaxProp());
+//		 BooleanProperty.booleanProperty().bindBidirectional(ps.IsScaleProp());
+		 DoubleProperty.doubleProperty(clache1Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.getClacheParam1Prop());
+		 DoubleProperty.doubleProperty(clache2Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.getClacheParam2Prop());
+		 DoubleProperty.doubleProperty(clacheClipSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getClacheParam3Prop());		 
+		 DoubleProperty.doubleProperty(brightnessSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getBrightnessParam1Prop());
+		 DoubleProperty.doubleProperty(addSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getBrightnessParam2Prop());
+		 DoubleProperty.doubleProperty(contrastSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getContrastParam1Prop());
+		 DoubleProperty.doubleProperty(multSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getContrastParam2Prop());		 
+//		 IntegerProperty.integerProperty().bindBidirectional(ps.getMedianProp());
+//		 IntegerProperty.integerProperty().bindBidirectional(ps.getBilateralParam1Prop());
+//		 IntegerProperty.integerProperty().bindBidirectional(ps.getBilateralParam2Prop());
+//		 IntegerProperty.integerProperty().bindBidirectional(ps.getBilateralSigmaProp());
+
+	}
+	 
+	 @FXML 
+	 public void storePreprocesSettingsClicked(ActionEvent event) {
+		 if (flirDummyFolder == null) return;
+		 try {
+			SettingsManager.storePreproc(new PreprocessingSettings(minTempDoubleProperty.doubleValue(), maxTempDoubleProperty.doubleValue(), scaleTempCheckbox.isSelected(), 
+					 clache1Spinner.getValue(), clache2Spinner.getValue(), clacheClipSpinner.getValue(), brightnessSpinner.getValue(), addSpinner.getValue(),
+					 contrastSpinner.getValue(), multSpinner.getValue(), 10, 20, 20, 20),
+					 flirDummyFolder.toAbsolutePath().toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	 }
+	 
 	//buttons
 	@FXML 
 	protected void connectToStream(ActionEvent event) {
@@ -176,7 +221,7 @@ public class MainController {
 				Utils.updateFXControl(originalCroppedImageView.imageProperty(), ImageConvertor.convertMatToImage(originalMat));
 				
 				refreshBackground(mainMat, printInfo);
-				if(printInfo && !isBackgroundOnly(workMat)) System.out.print(newValue.getFilename() + ";" );				
+				if(printInfo && !AlgHelper.isBackgroundOnly(workMat)) System.out.print(newValue.getFilename() + ";" );				
 			});
 			
 			fds.messageProperty().addListener((obs, oldValue, newValue) -> { 
@@ -187,27 +232,26 @@ public class MainController {
 		}		
 	}
 	
-
+	
 	private void detectUsingEdges(Mat workMat) {
-		Mat handMat = workMat.clone();				
-		handMat = AlgHelper.segmentHandBinary(handMat, handThresholdSlider.getValue());
+		Mat handMat = AlgHelper.segmentHandBinary(workMat, handThresholdSlider.getValue());
 		List <MatOfPoint> contours = MatOperations.findContours(handMat, contourMinSizeSpinner.getValue());
 		MatOfPoint biggest = MatOperations.findBiggestContour(contours);
+		Mat edgesMat = new Mat(workMat.size(), workMat.type(), Scalar.all(0));
 		
 		if (contours.size() > 0 && Imgproc.contourArea(biggest) > 100) {
-			Mat croppedEdgesMat = workMat.clone();						
-			Rect rect = MatOperations.findExtendedRegion(handMat);
-			Imgproc.rectangle(handMat, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), Scalar.all(255));
+			Rect roiRect = MatOperations.findExtendedRegion(handMat);
 	
-			if (rect.width != 0 && rect.height != 0) {
-				croppedEdgesMat = segmentGoods2(croppedEdgesMat,rect);
-				Utils.updateFXControl(goodsImageView.imageProperty(), ImageConvertor.convertMatToImage(croppedEdgesMat));			
-			}
-		}
+			if (roiRect.width != 0 && roiRect.height != 0)
+				edgesMat = segmentGoodsUsingEdges(handMat, workMat, roiRect);
+			
+//			Imgproc.rectangle(handMat, new Point(roiRect.x, roiRect.y), new Point(roiRect.x + roiRect.width, roiRect.y + roiRect.height), Scalar.all(255));
+
+		}		
+
+		Utils.updateFXControl(goodsImageView.imageProperty(), ImageConvertor.convertMatToImage(edgesMat));
 		Utils.updateFXControl(handImageView.imageProperty(), ImageConvertor.convertMatToImage(handMat));	
-		Utils.updateFXControl(helperImageView.imageProperty(), ImageConvertor.convertMatToImage(workMat));			
-
-
+		Utils.updateFXControl(helperImageView.imageProperty(), ImageConvertor.convertMatToImage(workMat));	
 	}
 	
 	private void detectUsingMog(Mat mainMat, Mat workMat) {
@@ -241,7 +285,7 @@ public class MainController {
 //		segmentedGoods = MatOperations.morphology(segmentedGoods, true, false, 5, 4, 5);
 		
 		
-		if (!isHandInShelf(fgmask)) {
+		if (!AlgHelper.isHandInShelf(fgmask)) {
 			contours = MatOperations.findContours(segmentedHandSmall, 0);
 			Point [] contoursPoints = new Point[0];
 			for (int i = 0; i < contours.size(); ++i) contoursPoints = Stream.concat(Arrays.stream(contoursPoints), Arrays.stream(contours.get(i).toArray())).toArray(Point[]::new);				
@@ -315,7 +359,7 @@ public class MainController {
 				MatOperations.drawMinBoundingRect(segmentedGoods, points);
 				filteredContours.add(mop);
 			}
-			if(printInfo && !isBackgroundOnly(workMat)) {
+			if(printInfo && !AlgHelper.isBackgroundOnly(workMat)) {
 //				goodsContourFeatures(filteredContours);
 //				System.out.println("Hand with goods" );
 			}
@@ -327,41 +371,15 @@ public class MainController {
 	}
 	
 	private void refreshBackground(Mat mat, boolean printInfo) {
-		if (isBackgroundOnly(mat)) {
+		if (AlgHelper.isBackgroundOnly(mat)) {
 			if (printInfo) System.out.println("background");
 			mog = Video.createBackgroundSubtractorMOG2(51, 200, true);
 			mog.apply(mat, new Mat());
 		}
 	}
 	
-	private boolean isBackgroundOnly(Mat mat) {
-		Mat items = MatOperations.doCannyEdgeDetection(mat, 30, 60);
-		List <MatOfPoint> contours = MatOperations.findContours(items, 25);	
-		return contours.size() == 0;
-	}
-	
-	private boolean isHandInShelf(Mat mat) {
-		Mat segmentedHand = AlgHelper.segmentHandBinary(mat, 220);
-		segmentedHand = MatOperations.erode(segmentedHand, 25, 10);
-		MatOfPoint mop = new MatOfPoint();
-		Core.findNonZero(segmentedHand, mop);
-		if (Imgproc.boundingRect(mop).height >= IMAGE_HEIGHT) return true;
-		return false;
-	}
-	
-	private Mat drawRegionOfInterestRect(Mat mat, Mat preprocessed) { //FIXME: repair
-		Mat result = mat.clone();		
-//		Mat workmat = preprocessed.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
-//		Mat smallResult = mat.submat(CROP_OFFSET_Y, CROP_OFFSET_Y + IMAGE_CROPPED_HEIGHT, CROP_OFFSET_X, CROP_OFFSET_X +  IMAGE_CROPPED_WIDTH);
-//		workmat = segmentHand(workmat, handThresholdSpinner.getValue(), handDilationSpinner.getValue(), handIterSpinner.getValue());
-//		Rect rect = MatOperations.findExtendedRegion(workmat);
-//		Imgproc.rectangle(smallResult, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), Scalar.all(255), 2 );
-//
-//		MatOperations.replaceMatArea(result, smallResult, CROP_OFFSET_X, CROP_OFFSET_Y);
+
 		
-		return result;
-	}
-	
 	private Mat hullHandWithGoodsRegion(Mat mat, Mat untouched) {
 		Mat result = mat.clone();
 		Mat workmat = untouched.clone();
@@ -445,10 +463,12 @@ public class MainController {
 		return result;
 	}
 	
-	private Mat segmentGoods2(Mat mat, Rect rect) {
-		Mat roi = mat.submat(rect);
+	private Mat segmentGoods2(Mat workMat, Rect roiRect) {
+		Mat roi = workMat.submat(roiRect);
 		Mat edges = new Mat(roi.size(), roi.type());
 		Mat handMask = AlgHelper.segmentHandBinary(roi, handThresholdSlider.getValue());
+		
+		handMask = MatOperations.morphOpen(handMask, 5, 10);
 		
 		handMask = MatOperations.invert(handMask);
 		edges = MatOperations.doCannyEdgeDetection(roi, cannyEdge1Spinner.getValue() , cannyEdge2Spinner.getValue()); //detect edges
@@ -461,12 +481,32 @@ public class MainController {
 
 		List<MatOfPoint> contours = MatOperations.findContours(edges, 20);
 	    Imgproc.drawContours(roi, contours, -1, new Scalar(255, 0, 0), 2);
-		goodsContourFeatures(contours);
-		return mat;
+		AlgHelper.goodsContourFeatures(contours,printInfo);
+		return workMat;
 	}	
 	
+	private Mat segmentGoodsUsingEdges(Mat handMat, Mat workMat, Rect roiRect) {
+		Mat roi = workMat.submat(roiRect);
+		Mat edges = new Mat(roi.size(), roi.type());
+		Mat handMatRoi = handMat.submat(roiRect);
 
-	
+		Imgproc.morphologyEx(handMatRoi, handMatRoi, Imgproc.MORPH_DILATE, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(7,7)));
+
+		handMatRoi = MatOperations.invert(handMatRoi);
+//		
+		edges = MatOperations.doCannyEdgeDetection(roi, cannyEdge1Spinner.getValue() , cannyEdge2Spinner.getValue()); //detect edges
+//		edges = MatOperations.dilate(edges, 1, 2);
+//		edges = MatOperations.erode(edges, 3, 1);
+//		edges = MatOperations.morphClose(edges, 3, 5);
+//
+		Core.bitwise_and(handMatRoi, edges, edges);	
+//
+		List<MatOfPoint> contours = MatOperations.findContours(edges, 25);
+	    Imgproc.drawContours(roi, contours, -1, new Scalar(255, 0, 0), 2);
+		AlgHelper.goodsContourFeatures(contours,printInfo);
+		return workMat;
+	}	
+		
 	private Mat segmentHand2(Mat mat, int i, int j, int k, int l) {
 		Mat result = new Mat(mat.size(), mat.type());
 		Mat result2 =  new Mat(mat.size(), mat.type(), Scalar.all(0));
@@ -511,50 +551,7 @@ public class MainController {
 		return result;
 	}
 	
-	private void goodsContourFeatures(List <MatOfPoint> contours) {
-		if (!printInfo) return;
-		MatOfPoint biggest = MatOperations.findBiggestContour(contours);
-		//biggest
-		float length = 0, area = 0, minDiameter = 0, maxDiameter = 0, convexLength = 0, convexArea = 0, formFactor = 0,
-				roundness = 0, aspectRatio = 0, convexity = 0, solidity = 0, compactness = 0, extent = 0;	
-		if (biggest != null && biggest.toArray().length>0) {
-			Contour contour = new Contour(biggest);
-			length = (float) contour.getLength();
-			area = (float) contour.getArea();
-			minDiameter = (float) contour.getMinDiameter();
-			maxDiameter = (float) contour.getMaxDiameter();
-			convexLength = (float) contour.getConvexLength();
-			convexArea = (float) contour.getConvexArea();
-			formFactor = (float) contour.getFormFactor();
-			roundness = (float) contour.getRoundness();
-			aspectRatio = (float) contour.getAspectRatio();
-			convexity = (float) contour.getConvexity();
-			solidity = (float) contour.getSolidity();
-			compactness = (float) contour.getCompactness();
-			extent = (float) contour.getExtent();
-		}
-		System.out.print(length + ";" +  area + ";" + minDiameter + ";" + maxDiameter + ";" + convexLength + ";" + convexArea + ";" + formFactor
-				+ ";" + roundness + ";" + aspectRatio + ";" + convexity + ";" + solidity + ";" + compactness + ";" + extent + ";");
-		
-		//contours overall
-		int contoursCount = contours.size();
-		float areaSum=0, areaMin = Float.MAX_VALUE, areaMax = 0, areaAvg = 0;
-		float lengthSum=0, lengthMin = Float.MAX_VALUE, lengthMax = 0, lengthAvg = 0;
-		for (MatOfPoint mop : contours) {
-			area = (float) Imgproc.contourArea(mop);
-			length = (float) Imgproc.arcLength(new MatOfPoint2f(mop.toArray()), false);
-			areaSum += area;
-			lengthSum += length;
-			if (areaMin > area) areaMin = area;
-			if (areaMax < area) areaMax = area;
-			if (lengthMin > length) lengthMin = length;
-			if (lengthMax < length) lengthMax = length;
-		}
-		areaAvg = contoursCount != 0 ? areaSum/contoursCount : 0 ;
-		lengthAvg = contoursCount != 0 ? lengthSum/contoursCount : 0;
-		System.out.print(contoursCount + ";" +  lengthMin + ";" + lengthMax + ";" + lengthSum + ";" + lengthAvg + ";" + areaMin + ";" + areaMax + ";" + areaSum + ";" + areaAvg + ";");
-//		System.out.print(";" + flirDummyFolder.getFileName().toString());
-	}
+	
 	
 	@FXML
 	private void closeStream(ActionEvent event) {		

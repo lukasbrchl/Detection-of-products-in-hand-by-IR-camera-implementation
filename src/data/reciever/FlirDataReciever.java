@@ -136,10 +136,7 @@ public class FlirDataReciever extends DataReciever<DataPayload> {
 	public void initDummyHost(Path path) {
 		try {
 			isDummy = true;
-			filesInFolder = Files.walk(path).filter(Files::isRegularFile).collect(Collectors.toList());
-//			filesInFolder = Files.walk(Paths.get(Config.getInstance().getValue(Config.FLIR_DUMMY_PATH).toString())).filter(Files::isRegularFile).collect(Collectors.toList());
-//			filesInFolder = Files.walk(Paths.get("D:\\ThesisProjectImages\\3_17_termo3")).filter(Files::isRegularFile).collect(Collectors.toList());			
-//			filesInFolder = Files.walk(Paths.get("D:\\ThesisProjectImages\\3_17_termo2")).filter(Files::isRegularFile).collect(Collectors.toList());			
+			filesInFolder = Files.walk(path).filter(Files::isRegularFile).filter(f -> f.getFileName().toString().endsWith(".bin")).collect(Collectors.toList());		
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

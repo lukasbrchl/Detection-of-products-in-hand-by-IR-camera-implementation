@@ -20,6 +20,8 @@ import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
+import application.MainController;
+
 public class MatOperations {
 		
 	public static Mat createMat(byte [] byteArray, int width, int height, boolean scale, float min, float max, float interval) {		
@@ -31,11 +33,21 @@ public class MatOperations {
 	}
 	
 	public static Rect findExtendedRegion(Mat mat) {
-		Mat result = MatOperations.dilate(mat, 10, 20);
-		Point [] points = new Point [4];
 		MatOfPoint mop = new MatOfPoint();
-		Core.findNonZero(result, mop);
+		Core.findNonZero(mat, mop);
 		Rect rect = Imgproc.boundingRect(mop);
+		rect.height = MainController.IMAGE_HEIGHT;
+		int enlargeSideBy = 20;
+		if (rect.x < enlargeSideBy) {
+			rect.width += rect.x + enlargeSideBy ;
+			rect.x = 0;
+		} else if (rect.x + rect.width >= MainController.IMAGE_WIDTH - enlargeSideBy) {
+			rect.width += MainController.IMAGE_WIDTH - (rect.x + rect.width) + enlargeSideBy ;
+			rect.x -= enlargeSideBy;
+		} else {
+			rect.width += enlargeSideBy*2;
+			rect.x -= enlargeSideBy;
+		}
 		return rect;
 	}
 	
@@ -75,7 +87,7 @@ public class MatOperations {
 		Mat resultMat = new Mat();
 		Mat medianMat = new Mat();
 		
-		Imgproc.medianBlur(mat, medianMat,13);
+		Imgproc.medianBlur(mat, medianMat,5); //13 for MOG
 //		Imgproc.GaussianBlur(medianMat, resultMat, new Size(size1, size2), sigma);
 		Imgproc.bilateralFilter(medianMat, resultMat, (int) sigma, size1, size2);
 //		Imgproc.GaussianBlur(resultMat, resultMat, new Size(3,3), 2);
