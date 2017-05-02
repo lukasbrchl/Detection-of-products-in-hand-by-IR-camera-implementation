@@ -81,18 +81,25 @@ public class MatOperations {
         return mat;
 	}
 	
-	public static Mat blurImage(Mat mat, double size1, double size2, double sigma) {
-		if (size1 % 2 == 0) ++size1;		
-		if (size2 % 2 == 0) ++size2;
-		Mat resultMat = new Mat();
-		Mat medianMat = new Mat();
-		
-		Imgproc.medianBlur(mat, medianMat,5); //13 for MOG
-//		Imgproc.GaussianBlur(medianMat, resultMat, new Size(size1, size2), sigma);
-		Imgproc.bilateralFilter(medianMat, resultMat, (int) sigma, size1, size2);
-//		Imgproc.GaussianBlur(resultMat, resultMat, new Size(3,3), 2);
-
-		return resultMat;
+	public static Mat gaussianBlur(Mat mat, double size1, double size2, double sigma) {
+		Mat result = new Mat(mat.size(), mat.type()); 
+		if (size1 % 2 == 0) ++size1;	
+		if (size2 % 2 == 0) ++size2;		
+		Imgproc.GaussianBlur(mat, result, new Size(size1, size2), sigma);
+		return result;
+	}
+	
+	public static Mat medianBlur(Mat mat, int size) {
+		Mat result = new Mat(mat.size(), mat.type()); 
+		if (size % 2 == 0) ++size;		
+		Imgproc.medianBlur(mat, result, size); 
+		return result;
+	}
+	
+	public static Mat bilateralBlur(Mat mat, double size1, double size2, double sigma) {
+		Mat result = new Mat(mat.size(), mat.type()); 
+		Imgproc.bilateralFilter(mat, result, (int) sigma, size1, size2);
+		return result;
 	}
 	
 	public static Mat binaryTreshold(Mat mat, double threshold) {

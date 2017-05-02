@@ -29,8 +29,10 @@ import org.opencv.objdetect.Objdetect;
 import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.video.Video;
 
-import data.algorithm.params.PreprocessingSettings;
-import data.algorithm.params.SettingsManager;
+import data.algorithm.settings.SettingsManager;
+import data.algorithm.settings.domain.EdgeDetectSettings;
+import data.algorithm.settings.domain.MogSettings;
+import data.algorithm.settings.domain.PreprocessingSettings;
 import data.image.AlgHelper;
 import data.image.ImageConvertor;
 import data.image.MatOperations;
@@ -67,9 +69,14 @@ public class MainController {
 	public static final int IMAGE_HEIGHT = 150;
 	public static final int PANEL_IMAGE_WIDTH = 160;
 	public static final int PANEL_IMAGE_HEIGHT = 37;
+	
+	private static final int MOG_THRESHOLD = 80;
+	private static final int MOG_HISTORY = 50;
 
 	//Main container
 	@FXML private BorderPane mainBorderPane;
+	//Menu
+	@FXML private MenuItem loadFilesFromFolder, loadPreprocesSettings, storePreprocesSettings;
 	//Image containers
 	@FXML private ImageView mainImageView, helperImageView, handImageView, goodsImageView, originalImageView, histogramImageView, originalCroppedImageView;
 	//Stream buttons
@@ -79,17 +86,7 @@ public class MainController {
 	@FXML private Label streamStatusLabel, recognizedLabel;
 	@FXML private CheckBox saveImagesCheckbox;
 	@FXML private Spinner<Double> playbackSpeedSpinner;
-	//Scale
-	@FXML private Slider minTempSlider, maxTempSlider;	
-	@FXML private Spinner<Double> minTempSpinner, maxTempSpinner;
-	@FXML private CheckBox scaleTempCheckbox;
-	@FXML private AnchorPane minTempPane, maxTempPane;
-	//Brightness and contrast	
-	@FXML private Spinner<Double> clache1Spinner, clache2Spinner, clacheClipSpinner, brightnessSpinner, addSpinner, contrastSpinner, multSpinner;
-	//Blur
-	@FXML private Spinner<Double> blur1Spinner, blur2Spinner, blurSigmaSpinner;
-	@FXML private CheckBox blurCheckbox;
-	@FXML private HBox blurPane;
+	
 	//Canny edge
 	@FXML private Spinner<Double> cannyEdge1Spinner, cannyEdge2Spinner;
 	//Dilate and erode
@@ -105,20 +102,28 @@ public class MainController {
 	//Main image settings
 	@FXML private CheckBox  exposureMainCheckbox, blurMainCheckbox, cannyMainCheckbox, morphologyMainCheckbox, hullHandGoodsMainCheckbox, hullGoodsMainCheckbox, roiMainCheckbox;
 	
-	@FXML private Spinner<Double> optionalSpinner, optionalSpinner2, optionalSpinner3, optionalSpinner4, optionalSpinner5;
-	@FXML private MenuItem loadFilesFromFolder, loadPreprocesSettings, storePreprocesSettings;
-	
+	//preprocessing
+	@FXML private AnchorPane minTempPane, maxTempPane;
+	@FXML private Slider minTempSlider, maxTempSlider;	
+	@FXML private Spinner<Double> prep_tempMinSpinner, prep_tempMaxSpinner, prep_clacheSize1Spinner, prep_clacheSize2Spinner, prep_clacheClipSpinner,
+		prep_brightnessParam1Spinner, prep_brightnessParam2Spinner, prep_contrastParam1Spinner, prep_contrastParam2Spinner, prep_bilateralSize1Spinner, prep_bilateralSize2Spinner,
+		prep_gaussianSize1Spinner, prep_gaussianSize2Spinner; 	
+	@FXML private Spinner<Integer> prep_medianSizeSpinner, prep_bilateralSigmaSpinner, prep_gaussianSigmaSpinner;
+	@FXML private CheckBox prep_scaleCheckbox;
 	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty,  binaryThresholdDoubleProperty;  //prevents GC from cleaning weak listeners
+	
+	//class variables
 	private FlirDataService fds;
 	private FlirDataReciever flirDataReciever;
 	private Path flirDummyFolder;
 	private boolean printInfo;	
 	private BackgroundSubtractorMOG2 mog = Video.createBackgroundSubtractorMOG2(MOG_HISTORY, MOG_THRESHOLD, true);
 	
-	private static final int MOG_THRESHOLD = 80;
-	private static final int MOG_HISTORY = 50;
-	
+	//in memory settings
 	private PreprocessingSettings ps = new PreprocessingSettings();
+	private MogSettings ms = new MogSettings();
+	private EdgeDetectSettings es = new EdgeDetectSettings();
+	private Mode mode = Mode.MOG_DETECTION;
 
 	public MainController() {
 	}
@@ -126,7 +131,6 @@ public class MainController {
 	 @FXML 
 	 public void initialize() {
 		 bindSpinnersToSliders();
-		 mogDefaults();
 		 flirDataReciever = new FlirDataReciever(Config.getInstance().getValue(Config.SOCKET_HOSTNAME), Integer.parseInt(Config.getInstance().getValue(Config.SOCKET_PORT)), IMAGE_WIDTH*IMAGE_HEIGHT*2, playbackSpeedSpinner.getValue().intValue());
 		 playbackSpeedSpinner.valueProperty().addListener((obs, oldValue, newValue) -> { 
 			 flirDataReciever.setPlaybackSpeed(newValue.intValue());
@@ -141,48 +145,72 @@ public class MainController {
 		if (file != null) {
 			flirDummyFolder = file.toPath();
 			flirDataReciever.initDummyHost(flirDummyFolder);
-			readStream(event);			
+			readStream(event);		
+			loadPreprocesSettingsClicked(event);
 		}
 	 }
 	 
-	 @FXML 
-	 public void loadPreprocesSettingsClicked(ActionEvent event) {
+	private void bindPreprocessSettings() {
+		//FIXME: currently not working as expected
+		 DoubleProperty.doubleProperty(prep_tempMinSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.tempMinProperty());
+		 DoubleProperty.doubleProperty(prep_tempMaxSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.tempMaxProperty());
+		 BooleanProperty.booleanProperty(prep_scaleCheckbox.selectedProperty()).bindBidirectional(ps.scaleProperty());	 
+			
+		 DoubleProperty.doubleProperty(prep_clacheSize1Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.clacheSize1Property());
+		 DoubleProperty.doubleProperty(prep_clacheSize2Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.clacheSize2Property());
+		 DoubleProperty.doubleProperty(prep_clacheClipSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.clacheClipProperty());	
+		 DoubleProperty.doubleProperty(prep_brightnessParam1Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.brightnessParam1Property());
+		 DoubleProperty.doubleProperty(prep_brightnessParam2Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.brightnessParam2Property());
+		 DoubleProperty.doubleProperty(prep_contrastParam1Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.contrastParam1Property());
+		 DoubleProperty.doubleProperty(prep_contrastParam2Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.contrastParam2Property());
+		 
+		 IntegerProperty.integerProperty(prep_medianSizeSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.medianSizeProperty());
+		 DoubleProperty.doubleProperty(prep_bilateralSize1Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.bilateralSize1Property());
+		 DoubleProperty.doubleProperty(prep_bilateralSize2Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.bilateralSize2Property());
+		 IntegerProperty.integerProperty(prep_bilateralSigmaSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.bilateralSigmaProperty());
+		 DoubleProperty.doubleProperty(prep_bilateralSize1Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.gaussianSize1Property());
+		 DoubleProperty.doubleProperty(prep_bilateralSize2Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.gaussianSize2Property());
+		 IntegerProperty.integerProperty(prep_gaussianSigmaSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.gaussianSigmaProperty());	
+	}	 
+	 
+	@FXML 
+	public void loadPreprocesSettingsClicked(ActionEvent event) {
 		 if (flirDummyFolder == null) return;
 		 ps = SettingsManager.loadPreproc(flirDummyFolder.toAbsolutePath().toString());
 		 bindPreprocessSettings();
+		 System.out.println(ps.toString());
 	 }
-
-	private void bindPreprocessSettings() {
-		 DoubleProperty.doubleProperty(minTempSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getTempMinProp());
-		 DoubleProperty.doubleProperty(maxTempSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getTempMaxProp());
-//		 BooleanProperty.booleanProperty().bindBidirectional(ps.IsScaleProp());
-		 DoubleProperty.doubleProperty(clache1Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.getClacheParam1Prop());
-		 DoubleProperty.doubleProperty(clache2Spinner.getValueFactory().valueProperty()).bindBidirectional(ps.getClacheParam2Prop());
-		 DoubleProperty.doubleProperty(clacheClipSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getClacheParam3Prop());		 
-		 DoubleProperty.doubleProperty(brightnessSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getBrightnessParam1Prop());
-		 DoubleProperty.doubleProperty(addSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getBrightnessParam2Prop());
-		 DoubleProperty.doubleProperty(contrastSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getContrastParam1Prop());
-		 DoubleProperty.doubleProperty(multSpinner.getValueFactory().valueProperty()).bindBidirectional(ps.getContrastParam2Prop());		 
-//		 IntegerProperty.integerProperty().bindBidirectional(ps.getMedianProp());
-//		 IntegerProperty.integerProperty().bindBidirectional(ps.getBilateralParam1Prop());
-//		 IntegerProperty.integerProperty().bindBidirectional(ps.getBilateralParam2Prop());
-//		 IntegerProperty.integerProperty().bindBidirectional(ps.getBilateralSigmaProp());
-
-	}
-	 
-	 @FXML 
-	 public void storePreprocesSettingsClicked(ActionEvent event) {
+	
+	@FXML 
+	public void storePreprocesSettingsClicked(ActionEvent event) {
 		 if (flirDummyFolder == null) return;
 		 try {
-			SettingsManager.storePreproc(new PreprocessingSettings(minTempDoubleProperty.doubleValue(), maxTempDoubleProperty.doubleValue(), scaleTempCheckbox.isSelected(), 
-					 clache1Spinner.getValue(), clache2Spinner.getValue(), clacheClipSpinner.getValue(), brightnessSpinner.getValue(), addSpinner.getValue(),
-					 contrastSpinner.getValue(), multSpinner.getValue(), 10, 20, 20, 20),
+			 SettingsManager.storePreproc(new PreprocessingSettings(
+					 DoubleProperty.doubleProperty(prep_tempMinSpinner.getValueFactory().valueProperty()), 
+					 DoubleProperty.doubleProperty(prep_tempMaxSpinner.getValueFactory().valueProperty()),
+					 BooleanProperty.booleanProperty(prep_scaleCheckbox.selectedProperty()),
+					 DoubleProperty.doubleProperty(prep_clacheSize1Spinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_clacheSize2Spinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_clacheClipSpinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_brightnessParam1Spinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_brightnessParam2Spinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_contrastParam1Spinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_contrastParam2Spinner.getValueFactory().valueProperty()),
+					 IntegerProperty.integerProperty(prep_medianSizeSpinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_bilateralSize1Spinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_bilateralSize2Spinner.getValueFactory().valueProperty()),
+					 IntegerProperty.integerProperty(prep_bilateralSigmaSpinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_gaussianSize1Spinner.getValueFactory().valueProperty()),
+					 DoubleProperty.doubleProperty(prep_gaussianSize2Spinner.getValueFactory().valueProperty()),
+					 IntegerProperty.integerProperty(prep_gaussianSigmaSpinner.getValueFactory().valueProperty())					 
+					 ),
 					 flirDummyFolder.toAbsolutePath().toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	 }
 	 
+	
 	//buttons
 	@FXML 
 	protected void connectToStream(ActionEvent event) {
@@ -199,20 +227,22 @@ public class MainController {
 			fds = new FlirDataService(flirDataReciever);
 			fds.valueProperty().addListener((obs, oldValue, newValue) -> { 
 				printInfo = false;
+				mode = Mode.MOG_DETECTION;
 				byte [] byteArray = newValue.getData();
 		 	    Mat originalMat, scaledMat, mainMat, workMat;		     
 
-				originalMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, false, minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
-				if (scaleTempCheckbox.isSelected())
-					scaledMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, scaleTempCheckbox.isSelected(), minTempSpinner.getValue().floatValue() , maxTempSpinner.getValue().floatValue(), -1);
+				originalMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, false, prep_tempMinSpinner.getValue().floatValue() , prep_tempMaxSpinner.getValue().floatValue(), -1);
+				if (prep_scaleCheckbox.isSelected())
+					scaledMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, prep_scaleCheckbox.isSelected(), prep_tempMinSpinner.getValue().floatValue() , prep_tempMaxSpinner.getValue().floatValue(), -1);
 				else 
 					scaledMat = MatOperations.createMat(byteArray, IMAGE_WIDTH, IMAGE_HEIGHT, true, ImageConvertor.bytesToCelsius(ImageConvertor.getMin(byteArray)) , ImageConvertor.bytesToCelsius(ImageConvertor.getMax(byteArray)), -1);
+	
 
 				mainMat = processMainMat(scaledMat);			
 				workMat = preprocessMat(scaledMat);				
 				
-//				detectUsingMog(mainMat, workMat);
-				detectUsingEdges(workMat);
+				if (mode.equals(Mode.MOG_DETECTION)) detectUsingMog(mainMat, workMat);
+				else if (mode.equals(Mode.EDGE_DETECTION)) detectUsingEdges(workMat);
 
 
 				Utils.updateFXControl(mainImageView.imageProperty(), ImageConvertor.convertMatToImage(mainMat));
@@ -231,8 +261,7 @@ public class MainController {
 			fds.start();
 		}		
 	}
-	
-	
+		
 	private void detectUsingEdges(Mat workMat) {
 		Mat handMat = AlgHelper.segmentHandBinary(workMat, handThresholdSlider.getValue());
 		List <MatOfPoint> contours = MatOperations.findContours(handMat, contourMinSizeSpinner.getValue());
@@ -255,118 +284,117 @@ public class MainController {
 	}
 	
 	private void detectUsingMog(Mat mainMat, Mat workMat) {
-
-		Mat handMat = mainMat.clone();		
-		Mat fgmask = new Mat();
-		mog.setVarThreshold(80);
-		mog.apply(handMat, fgmask, 0);
+		Mat substractedMask = new Mat();
+		mog.setVarThreshold(40);
+		mog.apply(mainMat, substractedMask, 0);
 		
-		fgmask = MatOperations.maskMat(workMat, fgmask);
+		Mat substracted = MatOperations.maskMat(workMat, substractedMask);	
+		Mat segmentedGoods = Mat.zeros(substracted.size(), substracted.type()); 
+		Mat segmentedHandRoi = Mat.zeros(substracted.size(), substracted.type()); 
+		Mat segmentedHandFull = substracted.clone();
 		
-		Mat segmentedGoods = Mat.zeros(fgmask.size(), fgmask.type()); 
-		Mat segmentedHandSmall = Mat.zeros(fgmask.size(), fgmask.type()); 
-		Mat segmentedHandFull = fgmask.clone();
-		List <MatOfPoint> contours = MatOperations.findContours(fgmask, 0);
-		Rect rect = Imgproc.boundingRect(MatOperations.findBiggestContour(contours));
-		if (rect.width > 0 && rect.height > 0) {
-			segmentedHandSmall = segmentedHandFull.submat(rect);
-			Mat first = new Mat(segmentedHandSmall.size(), segmentedHandSmall.type());
-			Mat second = new Mat(segmentedHandSmall.size(), segmentedHandSmall.type());
-			Imgproc.threshold(segmentedHandSmall, first, 220 , 255, Imgproc.THRESH_BINARY);
-			Imgproc.adaptiveThreshold(segmentedHandSmall, second, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY,1555, -210);
-			Core.bitwise_or(first, second, segmentedHandSmall);
-			Imgproc.dilate(segmentedHandSmall, segmentedHandSmall, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(9,9)));
+		List <MatOfPoint> substractedContours = MatOperations.findContours(substracted, 0);
+		Rect roiRect = Imgproc.boundingRect(MatOperations.findBiggestContour(substractedContours));
+		
+		if (roiRect.width > 0 && roiRect.height > 0) {
+			segmentedHandRoi = segmentedHandFull.submat(roiRect);
+			Mat first = new Mat(segmentedHandRoi.size(), segmentedHandRoi.type());
+			Mat second = new Mat(segmentedHandRoi.size(), segmentedHandRoi.type());
+			Imgproc.threshold(segmentedHandRoi, first, 220 , 255, Imgproc.THRESH_BINARY);
+			Imgproc.adaptiveThreshold(segmentedHandRoi, second, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 1555, -210);
+			Core.bitwise_or(first, second, segmentedHandRoi);
+			Imgproc.dilate(segmentedHandRoi, segmentedHandRoi, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(9,9)));
 		}
 		
-		Mat segmentedHand = MatOperations.invert(segmentedHandFull);
-		fgmask.copyTo(segmentedGoods, segmentedHand);	
-		
-//		segmentedGoods = MatOperations.erode(segmentedGoods, 5, 5);
-//		segmentedGoods = MatOperations.morphology(segmentedGoods, true, false, 5, 4, 5);
-		
-		
-		if (!AlgHelper.isHandInShelf(fgmask)) {
-			contours = MatOperations.findContours(segmentedHandSmall, 0);
-			Point [] contoursPoints = new Point[0];
-			for (int i = 0; i < contours.size(); ++i) contoursPoints = Stream.concat(Arrays.stream(contoursPoints), Arrays.stream(contours.get(i).toArray())).toArray(Point[]::new);				
-			MatOfPoint joinedContours = new MatOfPoint(contoursPoints);
-			if (!joinedContours.empty()) {
-				MatOfPoint aprox = MatOperations.aproxCurve(joinedContours, 0.5, false);
-				if (!aprox.empty()) { 
-					MatOfInt convexHull2 = new MatOfInt();
-					Imgproc.convexHull(aprox, convexHull2);
-					if (convexHull2.toArray().length > 2) {
-						MatOfInt4 convexDef = MatOperations.convexityDefects(aprox, convexHull2);
-						List <Integer>cdList = convexDef.toList(); 
-						Point data[] = aprox.toArray();
+//		Mat segmentedHand = MatOperations.invert(segmentedHandFull);
+//		substracted.copyTo(segmentedGoods, segmentedHand);	
+//		
+////		segmentedGoods = MatOperations.erode(segmentedGoods, 5, 5);
+////		segmentedGoods = MatOperations.morphology(segmentedGoods, true, false, 5, 4, 5);
+//		
+//		
+//		if (!AlgHelper.isHandInShelf(substracted)) {
+//			substractedContours = MatOperations.findContours(segmentedHandRoi, 0);
+//			Point [] contoursPoints = new Point[0];
+//			for (int i = 0; i < substractedContours.size(); ++i) contoursPoints = Stream.concat(Arrays.stream(contoursPoints), Arrays.stream(substractedContours.get(i).toArray())).toArray(Point[]::new);				
+//			MatOfPoint joinedContours = new MatOfPoint(contoursPoints);
+//			if (!joinedContours.empty()) {
+//				MatOfPoint aprox = MatOperations.aproxCurve(joinedContours, 0.5, false);
+//				if (!aprox.empty()) { 
+//					MatOfInt convexHull2 = new MatOfInt();
+//					Imgproc.convexHull(aprox, convexHull2);
+//					if (convexHull2.toArray().length > 2) {
+//						MatOfInt4 convexDef = MatOperations.convexityDefects(aprox, convexHull2);
+//						List <Integer>cdList = convexDef.toList(); 
+//						Point data[] = aprox.toArray();
+//
+//						Point biggestDefect = null, biggestStart = null, biggestEnd = null;
+//						int biggestSize = -1;
+//					    for (int j = 0; j < cdList.size(); j = j+4) {
+//					        Point start = data[cdList.get(j)];
+//					        Point end = data[cdList.get(j+1)];
+//					        Point defect = data[cdList.get(j+2)];
+//					        int depth = cdList.get(j+3)/256;
+//				            if (biggestSize < depth) {
+//				            	biggestSize = depth;
+//				            	biggestDefect = defect;
+//				            	biggestStart = start;
+//				            	biggestEnd = end;
+//				            }
+//					    }
+//					    if (cdList.size() > 0 && biggestSize > 20 ) {
+//					        Imgproc.circle(segmentedHandRoi, biggestStart, 5, Scalar.all(255), 2);
+//					        Imgproc.circle(segmentedHandRoi, biggestEnd, 5, Scalar.all(255), 2);
+//					        Imgproc.circle(segmentedHandRoi, biggestDefect, 5, Scalar.all(255), 2);
+//					        
+//					        Point p1 = new Point(), p2 = new Point(), p3 = new Point(), p4 = new Point();
+//					        int length = 150;
+//						        double angle = Math.atan2(biggestStart.y - biggestEnd.y, biggestStart.x - biggestEnd.x);
+//			        
+//					        p1.x = Math.round(biggestEnd.x + length * Math.cos(angle));
+//					        p1.y = Math.round(biggestEnd.y + length * Math.sin(angle));
+//					        p2.x = Math.round(biggestStart.x + -length * Math.cos(angle));
+//					        p2.y = Math.round(biggestStart.y + -length * Math.sin(angle));
+//					        
+//					        p3.x = Math.round(biggestDefect.x + -length * Math.cos(angle));
+//					        p3.y = Math.round(biggestDefect.y + -length * Math.sin(angle));
+//					        p4.x = Math.round(biggestDefect.x + length * Math.cos(angle));
+//					        p4.y = Math.round(biggestDefect.y + length * Math.sin(angle));
+//					        
+//					        p1.x += roiRect.x; p1.y += roiRect.y;p2.x += roiRect.x;p2.y += roiRect.y; 
+//					        p3.x += roiRect.x;p3.y += roiRect.y;p4.x += roiRect.x;p4.y += roiRect.y;
+//					        biggestStart.x += roiRect.x; biggestStart.y += roiRect.y;
+//					        biggestEnd.x += roiRect.x; biggestEnd.y += roiRect.y;
+//			                
+//					        Imgproc.line(segmentedGoods, p3, p4, Scalar.all(0),3);
+//					        Imgproc.line(segmentedGoods, p1, biggestStart, Scalar.all(0),3);
+//					        Imgproc.line(segmentedGoods, p2, biggestEnd, Scalar.all(0),3);
+//					    }
+//					}
+//				}
+//			}
+//			
+//			segmentedGoods = MatOperations.erode(segmentedGoods, 4, 3);
+//			
+//			substractedContours = MatOperations.findContours(segmentedGoods, 0);
+//			List <MatOfPoint> filteredContours = new ArrayList<>();
+//			for (MatOfPoint mop : substractedContours) {
+//				if (mop.toArray().length < 5) continue;
+//				RotatedRect rotRect = Imgproc.fitEllipse(new MatOfPoint2f(mop.toArray()));
+//				if (rotRect.size.width < 20 || rotRect.size.height < 20) continue;
+//				Point [] points = new Point [4];
+//				rotRect.points(points);
+//				MatOperations.drawMinBoundingRect(segmentedGoods, points);
+//				filteredContours.add(mop);
+//			}
+//			if(printInfo && !AlgHelper.isBackgroundOnly(workMat)) {
+////				goodsContourFeatures(filteredContours);
+////				System.out.println("Hand with goods" );
+//			}
+//		}
 
-						Point biggestDefect = null, biggestStart = null, biggestEnd = null;
-						int biggestSize = -1;
-					    for (int j = 0; j < cdList.size(); j = j+4) {
-					        Point start = data[cdList.get(j)];
-					        Point end = data[cdList.get(j+1)];
-					        Point defect = data[cdList.get(j+2)];
-					        int depth = cdList.get(j+3)/256;
-				            if (biggestSize < depth) {
-				            	biggestSize = depth;
-				            	biggestDefect = defect;
-				            	biggestStart = start;
-				            	biggestEnd = end;
-				            }
-					    }
-					    if (cdList.size() > 0 && biggestSize > 20 ) {
-					        Imgproc.circle(segmentedHandSmall, biggestStart, 5, Scalar.all(255), 2);
-					        Imgproc.circle(segmentedHandSmall, biggestEnd, 5, Scalar.all(255), 2);
-					        Imgproc.circle(segmentedHandSmall, biggestDefect, 5, Scalar.all(255), 2);
-					        
-					        Point p1 = new Point(), p2 = new Point(), p3 = new Point(), p4 = new Point();
-					        int length = 150;
-						        double angle = Math.atan2(biggestStart.y - biggestEnd.y, biggestStart.x - biggestEnd.x);
-			        
-					        p1.x = Math.round(biggestEnd.x + length * Math.cos(angle));
-					        p1.y = Math.round(biggestEnd.y + length * Math.sin(angle));
-					        p2.x = Math.round(biggestStart.x + -length * Math.cos(angle));
-					        p2.y = Math.round(biggestStart.y + -length * Math.sin(angle));
-					        
-					        p3.x = Math.round(biggestDefect.x + -length * Math.cos(angle));
-					        p3.y = Math.round(biggestDefect.y + -length * Math.sin(angle));
-					        p4.x = Math.round(biggestDefect.x + length * Math.cos(angle));
-					        p4.y = Math.round(biggestDefect.y + length * Math.sin(angle));
-					        
-					        p1.x += rect.x; p1.y += rect.y;p2.x += rect.x;p2.y += rect.y; 
-					        p3.x += rect.x;p3.y += rect.y;p4.x += rect.x;p4.y += rect.y;
-					        biggestStart.x += rect.x; biggestStart.y += rect.y;
-					        biggestEnd.x += rect.x; biggestEnd.y += rect.y;
-			                
-					        Imgproc.line(segmentedGoods, p3, p4, Scalar.all(0),3);
-					        Imgproc.line(segmentedGoods, p1, biggestStart, Scalar.all(0),3);
-					        Imgproc.line(segmentedGoods, p2, biggestEnd, Scalar.all(0),3);
-					    }
-					}
-				}
-			}
-			
-			segmentedGoods = MatOperations.erode(segmentedGoods, 3, 2);
-			
-			contours = MatOperations.findContours(segmentedGoods, 0);
-			List <MatOfPoint> filteredContours = new ArrayList<>();
-			for (MatOfPoint mop : contours) {
-				if (mop.toArray().length < 5) continue;
-				RotatedRect rotRect = Imgproc.fitEllipse(new MatOfPoint2f(mop.toArray()));
-				if (rotRect.size.width < 20 || rotRect.size.height < 20) continue;
-				Point [] points = new Point [4];
-				rotRect.points(points);
-				MatOperations.drawMinBoundingRect(segmentedGoods, points);
-				filteredContours.add(mop);
-			}
-			if(printInfo && !AlgHelper.isBackgroundOnly(workMat)) {
-//				goodsContourFeatures(filteredContours);
-//				System.out.println("Hand with goods" );
-			}
-		}
-
-		Utils.updateFXControl(helperImageView.imageProperty(), ImageConvertor.convertMatToImage(fgmask));			
-		Utils.updateFXControl(handImageView.imageProperty(), ImageConvertor.convertMatToImage(segmentedHandFull));
+		Utils.updateFXControl(helperImageView.imageProperty(), ImageConvertor.convertMatToImage(substracted));			
+		Utils.updateFXControl(handImageView.imageProperty(), ImageConvertor.convertMatToImage(segmentedHandRoi));
 		Utils.updateFXControl(goodsImageView.imageProperty(), ImageConvertor.convertMatToImage(segmentedGoods));			
 	}
 	
@@ -569,7 +597,7 @@ public class MainController {
 	//left panel
 	@FXML 	
 	protected void scaleTempCheckboxClicked(ActionEvent event) {
-		if(scaleTempCheckbox.isSelected()) {
+		if(prep_scaleCheckbox.isSelected()) {
 			minTempPane.setDisable(false);
 			maxTempPane.setDisable(false);
 		}
@@ -587,10 +615,12 @@ public class MainController {
 	}
 	//helper methods
 	
+
+	
 	//init helpers
 	private void bindSpinnersToSliders() {	 
-		 minTempDoubleProperty = DoubleProperty.doubleProperty(minTempSpinner.getValueFactory().valueProperty());
-		 maxTempDoubleProperty = DoubleProperty.doubleProperty(maxTempSpinner.getValueFactory().valueProperty());
+		 minTempDoubleProperty = DoubleProperty.doubleProperty(prep_tempMinSpinner.getValueFactory().valueProperty());
+		 maxTempDoubleProperty = DoubleProperty.doubleProperty(prep_tempMaxSpinner.getValueFactory().valueProperty());
 		 binaryThresholdDoubleProperty = DoubleProperty.doubleProperty(handThresholdSpinner.getValueFactory().valueProperty());
 	
 	     minTempSlider.valueProperty().bindBidirectional(minTempDoubleProperty);
@@ -610,10 +640,16 @@ public class MainController {
 	private Mat processMainMat(Mat mat) {
 		Mat result = mat.clone();
 		Mat untouched = mat.clone();
-		if ((clache1Spinner.getValue() != 0 || clache2Spinner.getValue() != 0) && exposureMainCheckbox.isSelected()) result = MatOperations.clache(result, clache1Spinner.getValue(), clache2Spinner.getValue(), clacheClipSpinner.getValue());
-		if ((brightnessSpinner.getValue() != 0 || contrastSpinner.getValue() != 0) && exposureMainCheckbox.isSelected()) result = MatOperations.brightnessContrast(result, brightnessSpinner.getValue(), contrastSpinner.getValue());
-		if ((addSpinner.getValue() != 0 || multSpinner.getValue() != 0) && exposureMainCheckbox.isSelected()) result=  MatOperations.addMult(result, addSpinner.getValue(), multSpinner.getValue());
-		if (blurCheckbox.isSelected() && blurMainCheckbox.isSelected()) result = MatOperations.blurImage(result, blur1Spinner.getValue(), blur2Spinner.getValue(), blurSigmaSpinner.getValue());	
+		if ((prep_clacheSize1Spinner.getValue() != 0 || prep_clacheSize2Spinner.getValue() != 0) && exposureMainCheckbox.isSelected()) result = MatOperations.clache(result, prep_clacheSize1Spinner.getValue(), prep_clacheSize2Spinner.getValue(), prep_clacheClipSpinner.getValue());
+		if ((prep_brightnessParam1Spinner.getValue() != 0 || prep_contrastParam1Spinner.getValue() != 0) && exposureMainCheckbox.isSelected()) result = MatOperations.brightnessContrast(result, prep_brightnessParam1Spinner.getValue(), prep_contrastParam1Spinner.getValue());
+		if ((prep_brightnessParam2Spinner.getValue() != 0 || prep_contrastParam2Spinner.getValue() != 0) && exposureMainCheckbox.isSelected()) result=  MatOperations.addMult(result, prep_brightnessParam2Spinner.getValue(), prep_contrastParam2Spinner.getValue());
+		
+		
+		if (blurMainCheckbox.isSelected()) {
+			result = MatOperations.medianBlur(result, prep_medianSizeSpinner.getValue());
+			result = MatOperations.bilateralBlur(result, prep_bilateralSize1Spinner.getValue(), prep_bilateralSize2Spinner.getValue(), prep_bilateralSigmaSpinner.getValue());
+			result = MatOperations.gaussianBlur(result, prep_gaussianSize1Spinner.getValue(), prep_gaussianSize2Spinner.getValue(), prep_gaussianSigmaSpinner.getValue());
+		}
 		if (cannyMainCheckbox.isSelected()) result = MatOperations.doCannyEdgeDetection(result, cannyEdge1Spinner.getValue(), cannyEdge2Spinner.getValue());
 //		if (morphologyMainCheckbox.isSelected()) result = MatOperations.morphology(result, morphOpenCheckbox.isSelected(), morphCloseCheckbox.isSelected(), erodeSpinner.getValue(), dilateSpinner.getValue(), morphIterSpinner.getValue());
 		
@@ -625,10 +661,12 @@ public class MainController {
 
 	private Mat preprocessMat(Mat mat) {
 		Mat result = mat.clone();
-		if (clache1Spinner.getValue() != 0 && clache2Spinner.getValue() != 0) result =  MatOperations.clache(result, clache1Spinner.getValue(), clache2Spinner.getValue(), clacheClipSpinner.getValue());
-		if (brightnessSpinner.getValue() != 0 || contrastSpinner.getValue() != 0) result = MatOperations.brightnessContrast(result, brightnessSpinner.getValue(), contrastSpinner.getValue());
-		if (addSpinner.getValue() != 0 || multSpinner.getValue() != 0) result = MatOperations.addMult(result, addSpinner.getValue(), multSpinner.getValue());
-		if (blurCheckbox.isSelected()) result = MatOperations.blurImage(result, blur1Spinner.getValue(), blur2Spinner.getValue(), blurSigmaSpinner.getValue());	
+		if (prep_clacheSize1Spinner.getValue() != 0 && prep_clacheSize2Spinner.getValue() != 0) result =  MatOperations.clache(result, prep_clacheSize1Spinner.getValue(), prep_clacheSize2Spinner.getValue(), prep_clacheClipSpinner.getValue());
+		if (prep_brightnessParam1Spinner.getValue() != 0 || prep_contrastParam1Spinner.getValue() != 0) result = MatOperations.brightnessContrast(result, prep_brightnessParam1Spinner.getValue(), prep_contrastParam1Spinner.getValue());
+		if (prep_brightnessParam2Spinner.getValue() != 0 || prep_contrastParam2Spinner.getValue() != 0) result = MatOperations.addMult(result, prep_brightnessParam2Spinner.getValue(), prep_contrastParam2Spinner.getValue());
+		result = MatOperations.medianBlur(result, prep_medianSizeSpinner.getValue());
+		result = MatOperations.bilateralBlur(result, prep_bilateralSize1Spinner.getValue(), prep_bilateralSize2Spinner.getValue(), prep_bilateralSigmaSpinner.getValue());
+		result = MatOperations.gaussianBlur(result, prep_gaussianSize1Spinner.getValue(), prep_gaussianSize2Spinner.getValue(), prep_gaussianSigmaSpinner.getValue());
 		return result;
 	}
 	
@@ -653,90 +691,6 @@ public class MainController {
 		}
 	}
 	 
-
-	private void thermalCameraSegmentationDefaults() {
-		saveImagesCheckbox.setSelected(false);
-		playbackSpeedSpinner.getValueFactory().setValue(100.0);
-		minTempSpinner.getValueFactory().setValue(29.0);
-		maxTempSpinner.getValueFactory().setValue(33.0);
-		scaleTempCheckbox.setSelected(true);
-		clache1Spinner.getValueFactory().setValue(0.0); 
-		clache2Spinner.getValueFactory().setValue(0.0); 
-		clacheClipSpinner.getValueFactory().setValue(0.0); 
-		brightnessSpinner.getValueFactory().setValue(-0.0); 
-		addSpinner.getValueFactory().setValue(0.0); 
-		contrastSpinner.getValueFactory().setValue(0.0); 
-		multSpinner.getValueFactory().setValue(0.0);
-		blur1Spinner.getValueFactory().setValue(6.0); 
-		blur2Spinner.getValueFactory().setValue(6.0); 
-		blurSigmaSpinner.getValueFactory().setValue(7.0);
-		blurCheckbox.setSelected(true);
-		cannyEdge1Spinner.getValueFactory().setValue(15.0); 
-		cannyEdge2Spinner.getValueFactory().setValue(35.0);
-		dilateSpinner.getValueFactory().setValue(9.0);
-		erodeSpinner.getValueFactory().setValue(2.0);
-		morphIterSpinner.getValueFactory().setValue(3.0);
-		morphCloseCheckbox.setSelected(true);
-		morphOpenCheckbox.setSelected(false);
-		
-		contourMinSizeSpinner.getValueFactory().setValue(0.0);
-		
-		handThresholdSpinner.getValueFactory().setValue(180.0);
-		handDilationSpinner.getValueFactory().setValue(6.0);
-		handIterSpinner.getValueFactory().setValue(4.0);
-
-		
-		//main preview
-		exposureMainCheckbox.setSelected(false); 
-		blurMainCheckbox.setSelected(false); 
-		cannyMainCheckbox.setSelected(false);
-		morphologyMainCheckbox.setSelected(false);
-		hullHandGoodsMainCheckbox.setSelected(false);
-		hullGoodsMainCheckbox.setSelected(false);
-		roiMainCheckbox.setSelected(false);
-	}
-	
-	private void mogDefaults() {
-		saveImagesCheckbox.setSelected(false);
-		playbackSpeedSpinner.getValueFactory().setValue(100.0);
-		minTempSpinner.getValueFactory().setValue(28.0);
-		maxTempSpinner.getValueFactory().setValue(38.0);
-		scaleTempCheckbox.setSelected(true);
-		clache1Spinner.getValueFactory().setValue(1.0); 
-		clache2Spinner.getValueFactory().setValue(1.0); 
-		clacheClipSpinner.getValueFactory().setValue(1.0); 
-		brightnessSpinner.getValueFactory().setValue(0.0); 
-		addSpinner.getValueFactory().setValue(-30.0); 
-		contrastSpinner.getValueFactory().setValue(0.0); 
-		multSpinner.getValueFactory().setValue(0.8);
-		blur1Spinner.getValueFactory().setValue(3.0); 
-		blur2Spinner.getValueFactory().setValue(3.0); 
-		blurSigmaSpinner.getValueFactory().setValue(3.0);
-		blurCheckbox.setSelected(true);
-		cannyEdge1Spinner.getValueFactory().setValue(15.0); 
-		cannyEdge2Spinner.getValueFactory().setValue(35.0);
-		dilateSpinner.getValueFactory().setValue(9.0);
-		erodeSpinner.getValueFactory().setValue(2.0);
-		morphIterSpinner.getValueFactory().setValue(3.0);
-		morphCloseCheckbox.setSelected(true);
-		morphOpenCheckbox.setSelected(false);
-		
-		contourMinSizeSpinner.getValueFactory().setValue(0.0);
-		
-		handThresholdSpinner.getValueFactory().setValue(170.0);
-		handDilationSpinner.getValueFactory().setValue(6.0);
-		handIterSpinner.getValueFactory().setValue(4.0);
-
-		
-		//main preview
-		exposureMainCheckbox.setSelected(false); 
-		blurMainCheckbox.setSelected(false); 
-		cannyMainCheckbox.setSelected(false);
-		morphologyMainCheckbox.setSelected(false);
-		hullHandGoodsMainCheckbox.setSelected(false);
-		hullGoodsMainCheckbox.setSelected(false);
-		roiMainCheckbox.setSelected(false);
-	}
 	
 	
 	//getters, setters	
