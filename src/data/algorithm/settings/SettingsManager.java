@@ -45,5 +45,13 @@ public class SettingsManager {
 		}
 
 	}
+	
+	public static String createPreprocPath (String path) {
+		return path + "/" + preprocFilename;
+	}
+	
+	public static boolean fileExists(String path) {
+		return new File(path).exists();
+	}
 
 }

@@ -28,19 +28,7 @@ public class ImageConvertor {
 		float max = bytesToCelsius(getMax(byteArray));
 		return convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, min, max);
 	}
-	
-	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight, float interval) {
-		float origMin = bytesToCelsius(getMin(byteArray));
-		float origMax = bytesToCelsius(getMax(byteArray));
-		float avg = (origMin + origMax)/2 - 3.5f;
-		float min = avg - interval/2;
-		float max = avg + interval/2;
-		if (origMax - origMin < 5)
-			return convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight);
-		return convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, min, max);
-	}
-	
-	
+		
 	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
 		try {
 			BufferedImage outputImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_BYTE_GRAY);
@@ -91,13 +79,6 @@ public class ImageConvertor {
 		mat.put(0, 0, pixels);
 		return mat;
 	}	
-	
-	public static Mat convertBinaryToMat(byte[] byteArray, int imageWidth, int imageHeight, float interval) {
-		byte [] pixels = ((DataBufferByte) convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, interval).getRaster().getDataBuffer()).getData();			
-		Mat mat = new Mat( imageHeight, imageWidth, CvType.CV_8U);
-		mat.put(0, 0, pixels);
-		return mat;
-	}
 	
 	public static Mat convertBinaryToMat(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
 		byte [] pixels = ((DataBufferByte) convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, min, max).getRaster().getDataBuffer()).getData();			

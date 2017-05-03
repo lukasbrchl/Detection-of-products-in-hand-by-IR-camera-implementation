@@ -125,7 +125,7 @@
                                     <Insets bottom="7.0" top="7.0" />
                                  </padding>
                               </VBox>
-                              <CheckBox fx:id="prep_scaleCheckbox" mnemonicParsing="false" onAction="#scaleTempCheckboxClicked" selected="true" text="Scale temperatures">
+                              <CheckBox fx:id="prep_scaleCheckbox" mnemonicParsing="false" selected="true" text="Scale temperatures">
                                  <VBox.margin>
                                     <Insets top="5.0" />
                                  </VBox.margin>

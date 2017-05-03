@@ -8,55 +8,58 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
 @XmlRootElement(name="preprocessingSettings")
 public class PreprocessingSettings {
 
-	DoubleProperty tempMin;
-	DoubleProperty tempMax;
+	ObjectProperty<Double> tempMin;
+	ObjectProperty<Double> tempMax;
 	BooleanProperty scale;
 	
-	DoubleProperty clacheSize1;
-	DoubleProperty clacheSize2;
-	DoubleProperty clacheClip;
-	DoubleProperty brightnessParam1;
-	DoubleProperty brightnessParam2;
-	DoubleProperty contrastParam1;
-	DoubleProperty contrastParam2;
+	ObjectProperty<Double> clacheSize1;
+	ObjectProperty<Double> clacheSize2;
+	ObjectProperty<Double> clacheClip;
+	ObjectProperty<Double> brightnessParam1;
+	ObjectProperty<Double> brightnessParam2;
+	ObjectProperty<Double> contrastParam1;
+	ObjectProperty<Double> contrastParam2;
 	
-	IntegerProperty medianSize;
-	DoubleProperty bilateralSize1;
-	DoubleProperty bilateralSize2;
-	IntegerProperty bilateralSigma;
-	DoubleProperty gaussianSize1;
-	DoubleProperty gaussianSize2;
-	IntegerProperty gaussianSigma;
+	ObjectProperty<Integer> medianSize;
+	ObjectProperty<Double> bilateralSize1;
+	ObjectProperty<Double> bilateralSize2;
+	ObjectProperty<Integer> bilateralSigma;
+	ObjectProperty<Double> gaussianSize1;
+	ObjectProperty<Double> gaussianSize2;
+	ObjectProperty<Integer> gaussianSigma;
 
 
 
 	public PreprocessingSettings() {
-		this.tempMin = new SimpleDoubleProperty();
-		this.tempMax = new SimpleDoubleProperty();
+		this.tempMin = new SimpleObjectProperty<Double>(0.0);
+		this.tempMax = new SimpleObjectProperty<Double>(0.0);
 		this.scale = new SimpleBooleanProperty();
-		this.clacheSize1 = new SimpleDoubleProperty();
-		this.clacheSize2 = new SimpleDoubleProperty();
-		this.clacheClip = new SimpleDoubleProperty();
-		this.brightnessParam1 = new SimpleDoubleProperty();
-		this.brightnessParam2 = new SimpleDoubleProperty();
-		this.contrastParam1 = new SimpleDoubleProperty();
-		this.contrastParam2 = new SimpleDoubleProperty();
-		this.medianSize = new SimpleIntegerProperty();
-		this.bilateralSigma = new SimpleIntegerProperty();
-		this.bilateralSize2 = new SimpleDoubleProperty();
-		this.bilateralSize1 = new SimpleDoubleProperty();
-		this.gaussianSize1 = new SimpleDoubleProperty();
-		this.gaussianSize2 = new SimpleDoubleProperty();
-		this.gaussianSigma = new SimpleIntegerProperty();
+		this.clacheSize1 = new SimpleObjectProperty<Double>(0.0);
+		this.clacheSize2 = new SimpleObjectProperty<Double>(0.0);
+		this.clacheClip = new SimpleObjectProperty<Double>(0.0);
+		this.brightnessParam1 = new SimpleObjectProperty<Double>(0.0);
+		this.brightnessParam2 = new SimpleObjectProperty<Double>(0.0);
+		this.contrastParam1 = new SimpleObjectProperty<Double>(0.0);
+		this.contrastParam2 = new SimpleObjectProperty<Double>(0.0);
+		this.medianSize = new SimpleObjectProperty<Integer>(0);
+		this.bilateralSigma = new SimpleObjectProperty<Integer>(0);
+		this.bilateralSize2 = new SimpleObjectProperty<Double>(0.0);
+		this.bilateralSize1 = new SimpleObjectProperty<Double>(0.0);
+		this.gaussianSize1 = new SimpleObjectProperty<Double>(0.0);
+		this.gaussianSize2 = new SimpleObjectProperty<Double>(0.0);
+		this.gaussianSigma = new SimpleObjectProperty<Integer>(0);
 	}
 
 //	public PreprocessingSettings(double tempMin, double tempMax, boolean scale, double clacheSize1,
@@ -64,31 +67,31 @@ public class PreprocessingSettings {
 //			double contrastParam1, double contrastParam2, int medianSize, double bilateralSize1, double bilateralSize2, int bilateralSigma,
 //			double gaussianSize1, double gaussianSize2, int gaussianSigma) {
 //		super();
-//		this.tempMin = new SimpleDoubleProperty(tempMin);
-//		this.tempMax = new SimpleDoubleProperty(tempMax);
+//		this.tempMin = new SimpleObjectProperty(tempMin);
+//		this.tempMax = new SimpleObjectProperty(tempMax);
 //		this.scale = new SimpleBooleanProperty(scale);
-//		this.clacheSize1 = new SimpleDoubleProperty(clacheSize1);
-//		this.clacheSize2 = new SimpleDoubleProperty(clacheSize2);
-//		this.clacheClip = new SimpleDoubleProperty(clacheClip);
-//		this.brightnessParam1 = new SimpleDoubleProperty(brightnessParam1);
-//		this.brightnessParam2 = new SimpleDoubleProperty(brightnessParam2);
-//		this.contrastParam1 = new SimpleDoubleProperty(contrastParam1);
-//		this.contrastParam2 = new SimpleDoubleProperty(contrastParam2);
-//		this.medianSize = new SimpleIntegerProperty(medianSize);
-//		this.bilateralSize1 = new SimpleDoubleProperty(bilateralSize1);
-//		this.bilateralSize2 = new SimpleDoubleProperty(bilateralSize2);
-//		this.bilateralSigma = new SimpleIntegerProperty(bilateralSigma);
-//		this.gaussianSize1 = new SimpleDoubleProperty(gaussianSize1);
-//		this.gaussianSize2 = new SimpleDoubleProperty(gaussianSize2);
-//		this.gaussianSigma = new SimpleIntegerProperty(gaussianSigma);
+//		this.clacheSize1 = new SimpleObjectProperty(clacheSize1);
+//		this.clacheSize2 = new SimpleObjectProperty(clacheSize2);
+//		this.clacheClip = new SimpleObjectProperty(clacheClip);
+//		this.brightnessParam1 = new SimpleObjectProperty(brightnessParam1);
+//		this.brightnessParam2 = new SimpleObjectProperty(brightnessParam2);
+//		this.contrastParam1 = new SimpleObjectProperty(contrastParam1);
+//		this.contrastParam2 = new SimpleObjectProperty(contrastParam2);
+//		this.medianSize = new SimpleObjectProperty(medianSize);
+//		this.bilateralSize1 = new SimpleObjectProperty(bilateralSize1);
+//		this.bilateralSize2 = new SimpleObjectProperty(bilateralSize2);
+//		this.bilateralSigma = new SimpleObjectProperty(bilateralSigma);
+//		this.gaussianSize1 = new SimpleObjectProperty(gaussianSize1);
+//		this.gaussianSize2 = new SimpleObjectProperty(gaussianSize2);
+//		this.gaussianSigma = new SimpleObjectProperty(gaussianSigma);
 //	}
 
-	public PreprocessingSettings(DoubleProperty tempMin, DoubleProperty tempMax, BooleanProperty scale,
-			DoubleProperty clacheSize1, DoubleProperty clacheSize2, DoubleProperty clacheClip,
-			DoubleProperty brightnessParam1, DoubleProperty brightnessParam2, DoubleProperty contrastParam1,
-			DoubleProperty contrastParam2, IntegerProperty medianSize, DoubleProperty bilateralSize1,
-			DoubleProperty bilateralSize2, IntegerProperty bilateralSigma, DoubleProperty gaussianSize1,
-			DoubleProperty gaussianSize2, IntegerProperty gaussianSigma) {
+	public PreprocessingSettings(ObjectProperty<Double> tempMin, ObjectProperty<Double> tempMax, BooleanProperty scale,
+			ObjectProperty<Double> clacheSize1, ObjectProperty<Double> clacheSize2, ObjectProperty<Double> clacheClip,
+			ObjectProperty<Double> brightnessParam1, ObjectProperty<Double> brightnessParam2, ObjectProperty<Double> contrastParam1,
+			ObjectProperty<Double> contrastParam2, ObjectProperty<Integer> medianSize, ObjectProperty<Double> bilateralSize1,
+			ObjectProperty<Double> bilateralSize2, ObjectProperty<Integer> bilateralSigma, ObjectProperty<Double> gaussianSize1,
+			ObjectProperty<Double> gaussianSize2, ObjectProperty<Integer> gaussianSigma) {
 		super();
 		this.tempMin = tempMin;
 		this.tempMax = tempMax;
@@ -109,9 +112,11 @@ public class PreprocessingSettings {
 		this.gaussianSigma = gaussianSigma;
 	}
 	
+	
+	
 	// getter, setters
 	
-	public DoubleProperty tempMinProperty() {
+	public ObjectProperty<Double> tempMinProperty() {
 		return this.tempMin;
 	}
 	
@@ -126,7 +131,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty tempMaxProperty() {
+	public ObjectProperty<Double> tempMaxProperty() {
 		return this.tempMax;
 	}
 	
@@ -156,7 +161,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty clacheSize1Property() {
+	public ObjectProperty<Double> clacheSize1Property() {
 		return this.clacheSize1;
 	}
 	
@@ -171,7 +176,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty clacheSize2Property() {
+	public ObjectProperty<Double> clacheSize2Property() {
 		return this.clacheSize2;
 	}
 	
@@ -186,7 +191,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty clacheClipProperty() {
+	public ObjectProperty<Double> clacheClipProperty() {
 		return this.clacheClip;
 	}
 	
@@ -201,7 +206,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty brightnessParam1Property() {
+	public ObjectProperty<Double> brightnessParam1Property() {
 		return this.brightnessParam1;
 	}
 	
@@ -216,7 +221,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty brightnessParam2Property() {
+	public ObjectProperty<Double> brightnessParam2Property() {
 		return this.brightnessParam2;
 	}
 	
@@ -231,7 +236,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty contrastParam1Property() {
+	public ObjectProperty<Double> contrastParam1Property() {
 		return this.contrastParam1;
 	}
 	
@@ -246,7 +251,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty contrastParam2Property() {
+	public ObjectProperty<Double> contrastParam2Property() {
 		return this.contrastParam2;
 	}
 	
@@ -261,7 +266,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public IntegerProperty medianSizeProperty() {
+	public ObjectProperty<Integer> medianSizeProperty() {
 		return this.medianSize;
 	}
 	
@@ -276,7 +281,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty bilateralSize1Property() {
+	public ObjectProperty<Double> bilateralSize1Property() {
 		return this.bilateralSize1;
 	}
 	
@@ -291,7 +296,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty bilateralSize2Property() {
+	public ObjectProperty<Double> bilateralSize2Property() {
 		return this.bilateralSize2;
 	}
 	
@@ -306,7 +311,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public IntegerProperty bilateralSigmaProperty() {
+	public ObjectProperty<Integer> bilateralSigmaProperty() {
 		return this.bilateralSigma;
 	}
 	
@@ -321,7 +326,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty gaussianSize1Property() {
+	public ObjectProperty<Double> gaussianSize1Property() {
 		return this.gaussianSize1;
 	}
 	
@@ -336,7 +341,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public DoubleProperty gaussianSize2Property() {
+	public ObjectProperty<Double> gaussianSize2Property() {
 		return this.gaussianSize2;
 	}
 	
@@ -351,7 +356,7 @@ public class PreprocessingSettings {
 	}
 	
 
-	public IntegerProperty gaussianSigmaProperty() {
+	public ObjectProperty<Integer> gaussianSigmaProperty() {
 		return this.gaussianSigma;
 	}
 	

@@ -23,36 +23,19 @@ import org.opencv.imgproc.Moments;
 import application.MainController;
 
 public class MatOperations {
-		
-	public static Mat createMat(byte [] byteArray, int width, int height, boolean scale, float min, float max, float interval) {		
-		Mat mat;
-		if (scale) mat = ImageConvertor.convertBinaryToMat(byteArray, width, height, min, max);
-		else if (interval > 0) mat = ImageConvertor.convertBinaryToMat(byteArray, width, height, interval);
-		else mat = ImageConvertor.convertBinaryToMat(byteArray, width, height);
+	
+	public static Mat createMat(byte [] byteArray, int width, int height, boolean normalize) {		
+		Mat mat = ImageConvertor.convertBinaryToMat(byteArray, width, height);
 		return mat;
 	}
-	
-	public static Rect findExtendedRegion(Mat mat) {
-		MatOfPoint mop = new MatOfPoint();
-		Core.findNonZero(mat, mop);
-		Rect rect = Imgproc.boundingRect(mop);
-		rect.height = MainController.IMAGE_HEIGHT;
-		int enlargeSideBy = 20;
-		if (rect.x < enlargeSideBy) {
-			rect.width += rect.x + enlargeSideBy ;
-			rect.x = 0;
-		} else if (rect.x + rect.width >= MainController.IMAGE_WIDTH - enlargeSideBy) {
-			rect.width += MainController.IMAGE_WIDTH - (rect.x + rect.width) + enlargeSideBy ;
-			rect.x -= enlargeSideBy;
-		} else {
-			rect.width += enlargeSideBy*2;
-			rect.x -= enlargeSideBy;
-		}
-		return rect;
-	}
-	
+		
+	public static Mat createMat(byte [] byteArray, int width, int height, float min, float max) {		
+		Mat mat = ImageConvertor.convertBinaryToMat(byteArray, width, height, min, max);
+		return mat;
+	}	
 	
 	public static Mat clache(Mat mat, double value1, double value2, double value3) {
+		if (value1 <= 0 || value2 <= 0 || value3 <= 0) return mat;
 		Mat result = new Mat(mat.size(), mat.type()); 
 		CLAHE clahe = Imgproc.createCLAHE(value3, new Size(value1, value2));
 		clahe.apply(mat, result);
@@ -60,9 +43,7 @@ public class MatOperations {
 	}
 	
 	public static Mat brightnessContrast(Mat mat, double brightness, double contrast) { //CLAHE http://docs.opencv.org/trunk/d5/daf/tutorial_py_histogram_equalization.html
-        double inverse_gamma = 1.0 / 3;      		
 		mat.convertTo(mat, -1, brightness + 1, -contrast);
-		Imgproc.equalizeHist(mat, mat);
 		return mat;
 	}
 	
@@ -106,13 +87,6 @@ public class MatOperations {
 		Mat result = new Mat(mat.size(), mat.type());        
 		Imgproc.threshold(mat, result, threshold , 255, Imgproc.THRESH_BINARY);
 		if ((int) (threshold % 2) == 0) threshold ++;
-//		Imgproc.threshold(mat, result, Imgproc.threshold(mat, new Mat(), 0, 255, Imgproc.THRESH_OTSU) + 150, 255, Imgproc.THRESH_BINARY);
-
-//		Imgproc.adaptiveThreshold(mat, result, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 501, 5);
-//		th2 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
-//	            cv2.THRESH_BINARY,11,2)
-//	th3 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-//	            cv2.THRESH_BINARY,11,2)
 		return result;
 	}
 	
@@ -128,15 +102,15 @@ public class MatOperations {
 		return result;
 	}
 	
-	public static List<MatOfPoint> findContours(Mat mat, double minSize) {
+	public static List<MatOfPoint> findContours(Mat mat, double minLength, double minArea) {
 		List<MatOfPoint> allContours = new ArrayList<MatOfPoint>();    
 		List<MatOfPoint> filteredContours = new ArrayList<MatOfPoint>();    
 		
         Imgproc.findContours(mat, allContours,  new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE);
         for (int i = 0; i < allContours.size(); i++) {
-//        	double countourArea = Imgproc.contourArea(allContours.get(i));	  
-        	double countourArea = Imgproc.arcLength(new MatOfPoint2f(allContours.get(i).toArray()), false);
-	        if (countourArea > minSize) filteredContours.add(allContours.get(i));	      
+        	double countourArea = Imgproc.contourArea(allContours.get(i));	  
+        	double contourLength = Imgproc.arcLength(new MatOfPoint2f(allContours.get(i).toArray()), false);
+	        if (contourLength > minLength && countourArea > minArea) filteredContours.add(allContours.get(i));	      
 		}        
         return filteredContours;
 	}
