@@ -8,6 +8,7 @@
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.Tab?>
@@ -43,7 +44,7 @@
                <children>
                   <StackPane alignment="TOP_CENTER" prefHeight="19.0" prefWidth="114.0" snapToPixel="false">
                      <children>
-                        <Button fx:id="readStreamButton" mnemonicParsing="false" onAction="#readStream" text="Read stream" visible="false" />
+                        <Button fx:id="readStreamButton" mnemonicParsing="false" onAction="#startReading" text="Read stream" visible="false" />
                         <Button fx:id="pauseStreamButton" mnemonicParsing="false" onAction="#pauseStream" text="Pause stream" visible="false" />
                         <Button fx:id="connectToStreamButton" mnemonicParsing="false" onAction="#connectToStream" text="Connect to stream" />
                      </children>
@@ -58,12 +59,6 @@
                   <Insets top="10.0" />
                </HBox.margin>
             </HBox>
-            <Label text="Playback speed" />
-            <Spinner fx:id="playbackSpeedSpinner" amountToStepBy="20" editable="true" initialValue="100" max="500.0" min="0.0" prefHeight="25.0" prefWidth="105.0">
-               <HBox.margin>
-                  <Insets left="10.0" />
-               </HBox.margin>
-            </Spinner>
          </children>
          <padding>
             <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
@@ -75,11 +70,107 @@
          <children>
             <TabPane prefHeight="813.0" prefWidth="252.0" tabClosingPolicy="UNAVAILABLE">
               <tabs>
+                  <Tab text="Preview">
+                     <content>
+                        <VBox prefHeight="95.0" prefWidth="188.0">
+                           <children>
+                              <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="17.0" prefWidth="281.0" text="Exposure">
+                                 <VBox.margin>
+                                    <Insets top="8.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <Separator prefWidth="200.0">
+                                 <padding>
+                                    <Insets bottom="10.0" top="10.0" />
+                                 </padding>
+                              </Separator>
+                              <CheckBox fx:id="prev_exposureCheckbox" mnemonicParsing="false" selected="true" text="Exposure" />
+                              <Label alignment="CENTER" prefHeight="17.0" prefWidth="314.0" text="Blur">
+                                 <VBox.margin>
+                                    <Insets top="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <Separator prefWidth="200.0">
+                                 <padding>
+                                    <Insets bottom="10.0" top="10.0" />
+                                 </padding>
+                              </Separator>
+                              <CheckBox fx:id="prev_blurCheckbox" mnemonicParsing="false" selected="true" text="Blur" />
+                              <Label alignment="CENTER" prefHeight="17.0" prefWidth="314.0" text="Canny" />
+                              <Separator prefWidth="200.0">
+                                 <padding>
+                                    <Insets bottom="10.0" top="10.0" />
+                                 </padding>
+                              </Separator>
+                              <VBox prefHeight="29.0" prefWidth="238.0">
+                                 <children>
+                                    <Label text="Canny threshold 1">
+                                       <VBox.margin>
+                                          <Insets />
+                                       </VBox.margin>
+                                    </Label>
+                                    <AnchorPane prefHeight="22.0" prefWidth="195.0">
+                                       <children>
+                                          <Slider fx:id="prev_cannyThresh1Slider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="130.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
+                                          <Spinner fx:id="prev_cannyThresh1Spinner" amountToStepBy="0.2" editable="true" initialValue="28" max="50.0" min="10.0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                       </children>
+                                    </AnchorPane>
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="7.0" top="7.0" />
+                                 </padding>
+                              </VBox>
+                              <VBox prefHeight="14.0" prefWidth="238.0">
+                                 <children>
+                                    <Label text="Canny threshold 2">
+                                       <VBox.margin>
+                                          <Insets />
+                                       </VBox.margin>
+                                    </Label>
+                                    <AnchorPane prefHeight="22.0" prefWidth="195.0">
+                                       <children>
+                                          <Slider fx:id="prev_cannyThresh2Slider" layoutY="3.0" max="50.0" min="10.0" prefHeight="14.0" prefWidth="130.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="2.0" />
+                                          <Spinner fx:id="prev_cannyThresh2Spinner" amountToStepBy="0.2" editable="true" initialValue="34.5" max="50" min="10.0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                       </children>
+                                    </AnchorPane>
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="7.0" top="7.0" />
+                                 </padding>
+                              </VBox>
+                              <CheckBox fx:id="prev_cannyCheckbox" mnemonicParsing="false" text="Canny edge" />
+                              <Label alignment="CENTER" layoutX="17.0" layoutY="149.0" prefHeight="17.0" prefWidth="314.0" text="Other" />
+                              <Separator layoutX="17.0" layoutY="166.0" prefWidth="200.0">
+                                 <padding>
+                                    <Insets bottom="10.0" top="10.0" />
+                                 </padding>
+                              </Separator>
+                              <CheckBox fx:id="hullHandGoodsMainCheckbox" mnemonicParsing="false" text="Hull hand with goods" />
+                              <CheckBox fx:id="hullGoodsMainCheckbox" mnemonicParsing="false" text="Hull goods" />
+                              <CheckBox fx:id="roiMainCheckbox" mnemonicParsing="false" text="Region of interest" />
+                              <AnchorPane prefHeight="282.0" prefWidth="238.0">
+                                 <children>
+                                    <CheckBox fx:id="prev_saveImagesCheckbox" layoutX="-42.0" layoutY="170.0" mnemonicParsing="false" onAction="#saveImagesCheckboxClicked" prefWidth="176.0" text="Save incoming images" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" />
+                                    <AnchorPane layoutY="231.0" prefHeight="27.0" prefWidth="240.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                                       <children>
+                                          <Label text="Playback speed" />
+                                          <Spinner fx:id="prev_playbackSpeedSpinner" amountToStepBy="20" editable="true" initialValue="100" max="1000" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                       </children>
+                                    </AnchorPane>
+                                 </children>
+                              </AnchorPane>
+                           </children>
+                           <padding>
+                              <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+                           </padding>
+                        </VBox>
+                     </content>
+                  </Tab>
                 <Tab text="Preprocessing">
                      <content>
-                        <VBox prefHeight="110.0" prefWidth="252.0">
+                        <VBox>
                            <children>
-                              <Label alignment="CENTER" prefHeight="17.0" prefWidth="325.0" text="Temperature normalization">
+                              <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="17.0" prefWidth="313.0" text="Temperature normalization">
                                  <VBox.margin>
                                     <Insets top="8.0" />
                                  </VBox.margin>
@@ -364,10 +455,6 @@
                         <Insets top="5.0" />
                      </VBox.margin>
                   </ImageView>
-                  <ImageView fx:id="originalCroppedImageView" fitHeight="38.0" fitWidth="160.0" pickOnBounds="true" preserveRatio="true">
-                     <VBox.margin>
-                        <Insets top="10.0" />
-                     </VBox.margin></ImageView>
                </children>
                <VBox.margin>
                   <Insets />
@@ -376,26 +463,7 @@
                   <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
                </padding>
             </VBox>
-            <VBox prefHeight="95.0" prefWidth="188.0">
-               <padding>
-                  <Insets bottom="14.0" left="14.0" right="14.0" top="14.0" />
-               </padding>
-               <children>
-                  <Label alignment="CENTER" prefHeight="17.0" prefWidth="227.0" text="Thermal preview image" />
-                  <CheckBox fx:id="exposureMainCheckbox" mnemonicParsing="false" selected="true" text="Exposure" />
-                  <CheckBox fx:id="blurMainCheckbox" mnemonicParsing="false" selected="true" text="Blur" />
-                  <CheckBox fx:id="cannyMainCheckbox" mnemonicParsing="false" text="Canny edge" />
-                  <CheckBox fx:id="morphologyMainCheckbox" mnemonicParsing="false" text="Morphology" />
-                  <CheckBox fx:id="hullHandGoodsMainCheckbox" mnemonicParsing="false" text="Hull hand with goods" />
-                  <CheckBox fx:id="hullGoodsMainCheckbox" mnemonicParsing="false" text="Hull goods" />
-                  <CheckBox fx:id="roiMainCheckbox" mnemonicParsing="false" text="Region of interest" />
-               </children>
-            </VBox>
-            <AnchorPane prefHeight="241.0" prefWidth="188.0">
-               <children>
-                  <CheckBox fx:id="saveImagesCheckbox" mnemonicParsing="false" onAction="#saveImagesCheckboxClicked" prefWidth="176.0" text="Save incoming images" AnchorPane.bottomAnchor="0.0" />
-               </children>
-            </AnchorPane>
+            <AnchorPane prefHeight="241.0" prefWidth="188.0" />
          </children>
          <padding>
             <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
@@ -407,10 +475,10 @@
          <children>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <ImageView fx:id="mainImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView fx:id="previewImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" />
                </children>
             </HBox>
-            <ImageView fx:id="helperImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="workImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
                   <Insets top="5.0" />
                </VBox.margin>
@@ -437,8 +505,10 @@
           <Menu mnemonicParsing="false" text="File">
             <items>
                   <MenuItem fx:id="loadFilesFromFolder" mnemonicParsing="false" onAction="#loadFilesFromFolderClicked" text="Load files from folder" />
-                  <MenuItem fx:id="loadPreprocesSettings" mnemonicParsing="false" onAction="#loadPreprocesSettingsClicked" text="Load preprocessing settings" />
-                  <MenuItem fx:id="storePreprocesSettings" mnemonicParsing="false" onAction="#storePreprocesSettingsClicked" text="Store preprocessing settings" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem fx:id="loadPreprocesSettings" mnemonicParsing="false" onAction="#loadSettingsClicked" text="Load preprocessing settings" />
+                  <MenuItem fx:id="storePreprocesSettings" mnemonicParsing="false" onAction="#storeSettingsClicked" text="Store preprocessing settings" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
               <MenuItem mnemonicParsing="false" text="Close" />
             </items>
           </Menu>

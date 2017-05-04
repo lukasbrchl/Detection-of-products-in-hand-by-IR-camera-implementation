@@ -1,4 +1,4 @@
-package data.image.domain;
+package image.domain;
 
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;

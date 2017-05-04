@@ -20,7 +20,7 @@ public abstract class DataReciever<T> {
 	protected T latest;
 	
 	protected abstract void openConnection();	
-	public abstract void initDummyHost(Path path);
+	protected abstract void initDummyHost(Path path);
 	protected abstract void closeConnection(); //do cleanup
 	
 	public T getImage() throws ClosedByInterruptException, InterruptedException {

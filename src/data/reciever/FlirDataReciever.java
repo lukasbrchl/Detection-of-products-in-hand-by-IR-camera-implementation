@@ -61,7 +61,8 @@ public class FlirDataReciever extends DataReciever<DataPayload> {
 			try {
 				if (socket != null && !socket.isClosed())
 					socket.close();
-				inputStream.close();
+				if (inputStream != null)
+					inputStream.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -104,8 +105,8 @@ public class FlirDataReciever extends DataReciever<DataPayload> {
 	}
 
 	protected DataPayload getImageFromDummyStream() throws InterruptedException, ClosedByInterruptException {		
-		if (fakeStreamCounter >= filesInFolder.size()) fakeStreamCounter = 0;
-		if (fakeStreamCounter >= filesInFolder.size()) throw new NoSuchElementException();		
+//		if (fakeStreamCounter >= filesInFolder.size()) fakeStreamCounter = 0;
+		if (fakeStreamCounter >= filesInFolder.size()) throw new RuntimeException("At the end of the stream");		
 
 		String filename = null;
 		byte[] data = null;

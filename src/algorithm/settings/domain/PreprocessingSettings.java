@@ -1,4 +1,4 @@
-package data.algorithm.settings.domain;
+package algorithm.settings.domain;
 
 import java.io.Serializable;
 
@@ -17,8 +17,8 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
-@XmlRootElement(name="preprocessingSettings")
-public class PreprocessingSettings {
+@XmlRootElement()
+public class PreprocessingSettings extends Settings {
 
 	ObjectProperty<Double> tempMin;
 	ObjectProperty<Double> tempMax;
@@ -40,8 +40,6 @@ public class PreprocessingSettings {
 	ObjectProperty<Double> gaussianSize2;
 	ObjectProperty<Integer> gaussianSigma;
 
-
-
 	public PreprocessingSettings() {
 		this.tempMin = new SimpleObjectProperty<Double>(0.0);
 		this.tempMax = new SimpleObjectProperty<Double>(0.0);
@@ -61,30 +59,6 @@ public class PreprocessingSettings {
 		this.gaussianSize2 = new SimpleObjectProperty<Double>(0.0);
 		this.gaussianSigma = new SimpleObjectProperty<Integer>(0);
 	}
-
-//	public PreprocessingSettings(double tempMin, double tempMax, boolean scale, double clacheSize1,
-//			double clacheSize2, double clacheClip, double brightnessParam1, double brightnessParam2,
-//			double contrastParam1, double contrastParam2, int medianSize, double bilateralSize1, double bilateralSize2, int bilateralSigma,
-//			double gaussianSize1, double gaussianSize2, int gaussianSigma) {
-//		super();
-//		this.tempMin = new SimpleObjectProperty(tempMin);
-//		this.tempMax = new SimpleObjectProperty(tempMax);
-//		this.scale = new SimpleBooleanProperty(scale);
-//		this.clacheSize1 = new SimpleObjectProperty(clacheSize1);
-//		this.clacheSize2 = new SimpleObjectProperty(clacheSize2);
-//		this.clacheClip = new SimpleObjectProperty(clacheClip);
-//		this.brightnessParam1 = new SimpleObjectProperty(brightnessParam1);
-//		this.brightnessParam2 = new SimpleObjectProperty(brightnessParam2);
-//		this.contrastParam1 = new SimpleObjectProperty(contrastParam1);
-//		this.contrastParam2 = new SimpleObjectProperty(contrastParam2);
-//		this.medianSize = new SimpleObjectProperty(medianSize);
-//		this.bilateralSize1 = new SimpleObjectProperty(bilateralSize1);
-//		this.bilateralSize2 = new SimpleObjectProperty(bilateralSize2);
-//		this.bilateralSigma = new SimpleObjectProperty(bilateralSigma);
-//		this.gaussianSize1 = new SimpleObjectProperty(gaussianSize1);
-//		this.gaussianSize2 = new SimpleObjectProperty(gaussianSize2);
-//		this.gaussianSigma = new SimpleObjectProperty(gaussianSigma);
-//	}
 
 	public PreprocessingSettings(ObjectProperty<Double> tempMin, ObjectProperty<Double> tempMax, BooleanProperty scale,
 			ObjectProperty<Double> clacheSize1, ObjectProperty<Double> clacheSize2, ObjectProperty<Double> clacheClip,
@@ -378,7 +352,7 @@ public class PreprocessingSettings {
 				+ ", contrastParam1=" + contrastParam1.get()  + ", contrastParam2=" + contrastParam2.get()  + ", medianSize="
 				+ medianSize.get()  + ", bilateralSize1=" + bilateralSize1.get()  + ", bilateralSize2=" + bilateralSize2.get() 
 				+ ", bilateralSigma=" + bilateralSigma.get()  + ", gaussianSize1=" + gaussianSize1.get()  + ", gaussianSize2="
-				+ gaussianSize2.get()  + ", gaussianSigma=" + gaussianSigma.get()  + "]";
+				+ gaussianSize2.get()  + ", gaussianSigma=" + gaussianSigma.get()  + "]\n";
 	}
 	
 

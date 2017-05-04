@@ -1,4 +1,4 @@
-package data.image.domain;
+package image.domain;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package data.image;
+package image;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +29,7 @@ public class MatOperations {
 		return mat;
 	}
 		
-	public static Mat createMat(byte [] byteArray, int width, int height, float min, float max) {		
+	public static Mat createMat(byte [] byteArray, int width, int height, double min, double max) {		
 		Mat mat = ImageConvertor.convertBinaryToMat(byteArray, width, height, min, max);
 		return mat;
 	}	
@@ -134,6 +134,12 @@ public class MatOperations {
 		    Imgproc.drawContours(contourImg, contours, i, new Scalar(255, 0, 0), thickness);
 		}
 		return contourImg;	
+	}
+	
+	public static MatOfInt convexHull(MatOfPoint mop) {
+		MatOfInt convexHull = new MatOfInt();		
+		Imgproc.convexHull(mop, convexHull);
+		return convexHull;
 	}
 	
 	public static MatOfPoint convexHull(Mat mat, List <MatOfPoint> contours) {

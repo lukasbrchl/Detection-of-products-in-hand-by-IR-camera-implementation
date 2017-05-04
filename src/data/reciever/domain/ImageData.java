@@ -1,11 +1,13 @@
 package data.reciever.domain;
 
+import java.nio.file.Path;
+
 public class ImageData {
 	
 	private final byte [] data;
 	private final String filename;
 	
-	//define own header with metadata
+	//TODO: define own header with metadata
 //	private int bytesPerPixel;
 //	private int widht;
 //	private int weight;

@@ -20,10 +20,10 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
-import data.image.ImageConvertor;
 import data.reciever.FlirDataReciever;
 import data.reciever.WebcamDataReciever;
 import data.reciever.domain.ImageData;
+import image.ImageConvertor;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import utils.Config;

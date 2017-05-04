@@ -7,10 +7,10 @@ import java.util.List;
 import org.opencv.core.Mat;
 
 import application.MainController;
-import data.image.ImageConvertor;
 import data.reciever.FlirDataReciever;
 import data.reciever.domain.DataPayload;
 import data.reciever.domain.ImageData;
+import image.ImageConvertor;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.concurrent.Service;

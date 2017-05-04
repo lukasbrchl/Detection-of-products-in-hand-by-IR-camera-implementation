@@ -1,4 +1,4 @@
-package data.image;
+package image;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
@@ -24,19 +24,19 @@ import javafx.scene.image.WritablePixelFormat;
 public class ImageConvertor {
 
 	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight) {
-		float min = bytesToCelsius(getMin(byteArray));
-		float max = bytesToCelsius(getMax(byteArray));
+		double min = bytesToCelsius(getMin(byteArray));
+		double max = bytesToCelsius(getMax(byteArray));
 		return convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, min, max);
 	}
 		
-	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
+	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight, double min, double max) {
 		try {
 			BufferedImage outputImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_BYTE_GRAY);
 			int counter = 0;
 			WritableRaster raster = outputImage.getRaster();
 			for (int y = 0; y < outputImage.getHeight(); ++y) {
 				for (int x = 0; x < outputImage.getWidth(); ++x) {
-					float temp  = bytesToCelsius(readTwoBytes(byteArray, counter));
+					double temp  = bytesToCelsius(readTwoBytes(byteArray, counter));
 					int normalizedVal = (int) (normalizeToByte(temp, min, max));
 //					Color color = new Color(normalizedVal, normalizedVal, normalizedVal);
 //					outputImage.setRGB(x, y, color.getRGB());
@@ -53,18 +53,18 @@ public class ImageConvertor {
 	}
 	
 	public static Image convertBinaryToImage(byte[] byteArray, int imageWidth, int imageHeight) {
-		float min = bytesToCelsius(getMin(byteArray));
-		float max = bytesToCelsius(getMax(byteArray));
+		double min = bytesToCelsius(getMin(byteArray));
+		double max = bytesToCelsius(getMax(byteArray));
 		return convertBinaryToImage(byteArray, imageWidth, imageHeight, min, max);
 	}
 	
-	public static Image convertBinaryToImage(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
+	public static Image convertBinaryToImage(byte[] byteArray, int imageWidth, int imageHeight, double min, double max) {
 	    WritableImage image = new WritableImage(imageWidth, imageHeight);
 	    PixelFormat<ByteBuffer> pixelFormat = PixelFormat.getByteRgbInstance();
 	    byte [] pixels = new byte[imageWidth * imageHeight * 3]; // * 3 because Image needs 3 bytes per pixel even if grayscale
 
 	    for (int i = 0, cnt = 0; i < byteArray.length; i += 2, cnt += 3) {
-	    	float value = normalizeToByte(bytesToCelsius(readTwoBytes(byteArray, i)), min, max);
+	    	double value = normalizeToByte(bytesToCelsius(readTwoBytes(byteArray, i)), min, max);
 	    	pixels[cnt] = (byte) value;
 	    	pixels[cnt + 1] = (byte) value;
 	    	pixels[cnt + 2] = (byte) value;
@@ -80,7 +80,7 @@ public class ImageConvertor {
 		return mat;
 	}	
 	
-	public static Mat convertBinaryToMat(byte[] byteArray, int imageWidth, int imageHeight, float min, float max) {
+	public static Mat convertBinaryToMat(byte[] byteArray, int imageWidth, int imageHeight, double min, double max) {
 		byte [] pixels = ((DataBufferByte) convertBinaryToBufferedImage(byteArray, imageWidth, imageHeight, min, max).getRaster().getDataBuffer()).getData();			
 		Mat mat = new Mat( imageHeight, imageWidth, CvType.CV_8U);
 		mat.put(0, 0, pixels);
@@ -111,23 +111,23 @@ public class ImageConvertor {
 	 	}
 	
 	 //helper methods
-	public static float bytesToCelsius(int value) {
-		return ((float) value * 0.04f) - 273.15f; // * 0.04 FLIR Ax5 constant + kelvin to celsius
+	public static double bytesToCelsius(int value) {
+		return ((double) value * 0.04f) - 273.15f; // * 0.04 FLIR Ax5 constant + kelvin to celsius
 	}
 
 	public static int unsignedToSigned(byte a) {
 		return a & 0xFF;
 	}
 	
-	public static float normalizeToByte(float value, float min, float max) {
-		float newMin = 0.0f, newMax = 255.0f;
+	public static double normalizeToByte(double value, double min, double max) {
+		double newMin = 0.0f, newMax = 255.0f;
 		return normalize(value, min, max, newMin, newMax);
 	}
 
-	public static float normalize(float value, float min, float max, float newMin, float newMax) {
+	public static double normalize(double value, double min, double max, double newMin, double newMax) {
 		if (value > max) value = max;
 		if (value < min) value = min;
-		float normalized = (newMax - newMin) / (max - min) * (value - max) + newMax;
+		double normalized = (newMax - newMin) / (max - min) * (value - max) + newMax;
 		return normalized;
 	}
 
@@ -185,8 +185,8 @@ public class ImageConvertor {
 	//debugging purpose
 	public void saveAsAsciiPgm(byte[] byteArray, int imageWidth, int imageHeight, String fileName) {
 		try {
-			float min = bytesToCelsius(getMin(byteArray));
-			float max = bytesToCelsius(getMax(byteArray));
+			double min = bytesToCelsius(getMin(byteArray));
+			double max = bytesToCelsius(getMax(byteArray));
 			Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"));
 			writer.write("P2 " + imageWidth + " " + imageHeight + " " + 255 + "\n");
 

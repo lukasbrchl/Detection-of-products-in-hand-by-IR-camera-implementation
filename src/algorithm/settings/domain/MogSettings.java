@@ -1,11 +1,11 @@
-package data.algorithm.settings.domain;
+package algorithm.settings.domain;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
 import javafx.beans.property.IntegerProperty;
 
-@XmlRootElement(name="mogSettings")
-public class MogSettings {
+@XmlRootElement()
+public class MogSettings extends Settings {
 	IntegerProperty mogThreshold;
 	IntegerProperty handThreshold;
 	IntegerProperty handMaskDilate;
