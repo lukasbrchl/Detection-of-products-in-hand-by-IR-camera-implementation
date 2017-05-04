@@ -1,4 +1,4 @@
-package algorithm.domain;
+package algorithm.detector.domain;
 
 public enum DetectionResult {
 	EMPTY_HAND("Empty hand", "empty_hand"),

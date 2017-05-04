@@ -9,12 +9,12 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
-import algorithm.AbstractDetect;
-import algorithm.BackgroundDetect;
-import algorithm.EdgeDetect;
-import algorithm.MogDetect;
-import algorithm.domain.DetectionResult;
-import algorithm.domain.Mode;
+import algorithm.detector.AbstractDetector;
+import algorithm.detector.BackgroundDetector;
+import algorithm.detector.EdgeDetector;
+import algorithm.detector.MogDetector;
+import algorithm.detector.domain.DetectionResult;
+import algorithm.detector.domain.Mode;
 import algorithm.settings.SettingsManager;
 import algorithm.settings.domain.PreprocessingSettings;
 import algorithm.settings.domain.PreviewSettings;
@@ -98,7 +98,7 @@ public class MainController {
 	
 	//in memory settings
 	private SettingsWrapper settings = new SettingsWrapper();
-	private AbstractDetect detector;	
+	private AbstractDetector detector;	
 	private Mode mode;
 
 	
@@ -109,9 +109,7 @@ public class MainController {
 	protected void readStream() {			
 		if (fds == null || !fds.isRunning()) {		
 			fds = new FlirDataService(flirDataReciever);
-			fds.valueProperty().addListener((obs, oldData, newData) -> {
-//				System.out.println(newData.getFilename());
-//				System.out.println(settings);
+			fds.valueProperty().addListener((obs, oldData, newData) -> {;
 				detector.setPrintInfo(true);
 				detector.initMats(newData);
 				detector.detect();
@@ -145,7 +143,7 @@ public class MainController {
 		 bindSpinnersToSliders();
 		 bindAllSettings();
 		 focusInit();
-		 flirDataReciever = new FlirDataReciever(Config.getInstance().getValue(Config.SOCKET_HOSTNAME), Integer.parseInt(Config.getInstance().getValue(Config.SOCKET_PORT)), AbstractDetect.IMAGE_WIDTH*AbstractDetect.IMAGE_HEIGHT*2, prev_playbackSpeedSpinner.getValue().intValue());
+		 flirDataReciever = new FlirDataReciever(Config.getInstance().getValue(Config.SOCKET_HOSTNAME), Integer.parseInt(Config.getInstance().getValue(Config.SOCKET_PORT)), AbstractDetector.IMAGE_WIDTH*AbstractDetector.IMAGE_HEIGHT*2, prev_playbackSpeedSpinner.getValue().intValue());
 		 prev_playbackSpeedSpinner.valueProperty().addListener((obs, oldValue, newValue) -> { 
 			 flirDataReciever.setPlaybackSpeed(newValue.intValue());
 		 });
@@ -208,9 +206,9 @@ public class MainController {
 		mode = Mode.MOG_DETECTION;
 //		mode = Mode.BACKGROUND_DETECTION;
 		if (detector == null)
-			if (mode.equals(Mode.MOG_DETECTION)) detector = new MogDetect(settings);
-			else if (mode.equals(Mode.EDGE_DETECTION)) detector = new EdgeDetect(settings);
-			else if (mode.equals(Mode.BACKGROUND_DETECTION)) detector = new BackgroundDetect(settings, "D:\\ThesisProjectImages\\4_13_03_termo7_cat\\background\\");
+			if (mode.equals(Mode.MOG_DETECTION)) detector = new MogDetector(settings);
+			else if (mode.equals(Mode.EDGE_DETECTION)) detector = new EdgeDetector(settings);
+			else if (mode.equals(Mode.BACKGROUND_DETECTION)) detector = new BackgroundDetector(settings, "D:\\ThesisProjectImages\\4_13_03_termo7_cat\\background\\");
 			readStream();		
 	}		
 	

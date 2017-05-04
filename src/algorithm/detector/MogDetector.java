@@ -1,4 +1,4 @@
-package algorithm;
+package algorithm.detector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,11 +21,11 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.video.Video;
 
-import algorithm.domain.DetectionResult;
+import algorithm.detector.domain.DetectionResult;
 import algorithm.settings.domain.SettingsWrapper;
 import image.MatOperations;
 
-public class MogDetect extends AbstractDetect {
+public class MogDetector extends AbstractDetector {
 
 	private static final int MOG_THRESHOLD = 20;
 	private static final int MOG_HISTORY = 50;
@@ -34,7 +34,7 @@ public class MogDetect extends AbstractDetect {
 	
 	private Mat background;
 
-	public MogDetect(SettingsWrapper settings) {
+	public MogDetector(SettingsWrapper settings) {
 		super(settings);
 		background = Mat.zeros(new Size(IMAGE_WIDTH, IMAGE_HEIGHT), CvType.CV_32F);
 	}

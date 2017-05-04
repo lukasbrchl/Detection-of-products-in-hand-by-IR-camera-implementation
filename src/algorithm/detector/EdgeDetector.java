@@ -1,4 +1,4 @@
-package algorithm;
+package algorithm.detector;
 
 import java.util.List;
 
@@ -14,9 +14,9 @@ import algorithm.settings.domain.PreprocessingSettings;
 import algorithm.settings.domain.SettingsWrapper;
 import image.MatOperations;
 
-public class EdgeDetect extends AbstractDetect {
+public class EdgeDetector extends AbstractDetector {
 	
-	public EdgeDetect(SettingsWrapper settings) {
+	public EdgeDetector(SettingsWrapper settings) {
 		super(settings);
 	}
 

@@ -1,22 +1,22 @@
-package algorithm;
+package algorithm.detector;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import algorithm.domain.DetectionResult;
+import algorithm.detector.domain.DetectionResult;
 import algorithm.settings.domain.SettingsWrapper;
 
-public class BackgroundDetect extends AbstractDetect {
+public class BackgroundDetector extends AbstractDetector {
 	
 	private String savePath;
 
-	public BackgroundDetect(SettingsWrapper settings) {
+	public BackgroundDetector(SettingsWrapper settings) {
 		super(settings);
 	}
 	
-	public BackgroundDetect(SettingsWrapper settings, String savePath) {
+	public BackgroundDetector(SettingsWrapper settings, String savePath) {
 		this(settings);
 		this.savePath = savePath;
 	}

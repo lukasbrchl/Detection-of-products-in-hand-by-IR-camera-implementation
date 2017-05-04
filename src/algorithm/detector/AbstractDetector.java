@@ -1,4 +1,4 @@
-package algorithm;
+package algorithm.detector;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import algorithm.domain.DetectionResult;
+import algorithm.detector.domain.DetectionResult;
 import algorithm.settings.domain.PreprocessingSettings;
 import algorithm.settings.domain.PreviewSettings;
 import algorithm.settings.domain.SettingsWrapper;
@@ -20,7 +20,7 @@ import data.reciever.domain.ImageData;
 import image.MatOperations;
 import image.domain.Contour;
 
-public abstract class AbstractDetect {
+public abstract class AbstractDetector {
 
 	public static final int IMAGE_WIDTH = 640;
 	public static final int IMAGE_HEIGHT = 150;
@@ -34,7 +34,7 @@ public abstract class AbstractDetect {
 	protected ImageData data;
 	protected DetectionResult result;
 	
-	public AbstractDetect(SettingsWrapper settings) {
+	public AbstractDetector(SettingsWrapper settings) {
 		this.settings = settings;
 	}
 	
