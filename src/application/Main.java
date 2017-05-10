@@ -10,6 +10,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+/**
+* Starting point for application. Loads MainLayout.fxml and {@link MainController}.
+* 
+* @author Lukas Brchl
+*/
 public class Main extends Application{
 
 	@Override

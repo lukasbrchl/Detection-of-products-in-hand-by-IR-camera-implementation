@@ -18,9 +18,16 @@ import algorithm.settings.domain.PreviewSettings;
 import algorithm.settings.domain.Settings;
 import algorithm.settings.domain.SettingsWrapper;
 
-public class SettingsManager {
+/**
+* Static class for storing and retrieving UI settings.
+* 
+* @author Lukas Brchl
+*/
+public final class SettingsManager {
 	
 	public static final String settingsFilename = "_settings.xml";
+	
+	private SettingsManager() {}
 
 	public static SettingsWrapper loadSettings(String path) {
 		try {

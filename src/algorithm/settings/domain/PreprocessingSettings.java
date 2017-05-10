@@ -17,6 +17,11 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+/**
+* This class contains properties that affects preprocessing steps on input images before applying algorithms.
+* 
+* @author Lukas Brchl
+*/
 @XmlRootElement()
 public class PreprocessingSettings extends Settings {
 

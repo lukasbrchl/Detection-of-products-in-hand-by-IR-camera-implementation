@@ -76,7 +76,7 @@
                            <children>
                               <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="17.0" prefWidth="281.0" text="Exposure">
                                  <VBox.margin>
-                                    <Insets top="8.0" />
+                                    <Insets />
                                  </VBox.margin>
                               </Label>
                               <Separator prefWidth="200.0">
@@ -172,7 +172,7 @@
                            <children>
                               <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="17.0" prefWidth="313.0" text="Temperature normalization">
                                  <VBox.margin>
-                                    <Insets top="8.0" />
+                                    <Insets />
                                  </VBox.margin>
                               </Label>
                               <Separator layoutX="10.0" layoutY="161.0" prefWidth="200.0">
@@ -334,79 +334,126 @@
                 <Tab text="Alg 1">
                      <content>
                         <VBox prefHeight="200.0" prefWidth="100.0">
+                           <padding>
+                              <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+                           </padding>
                            <children>
-                              <Label alignment="CENTER" prefHeight="17.0" prefWidth="275.0" text="Edge detection algorithm settings" />
-                              <HBox fx:id="cannyEdgePane" prefHeight="28.0" prefWidth="238.0">
+                              <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="17.0" prefWidth="281.0" text="MOG algorithm">
                                  <VBox.margin>
-                                    <Insets top="5.0" />
+                                    <Insets />
                                  </VBox.margin>
-                              </HBox>
-                              <Label text="Canny threshold" />
-                              <Spinner fx:id="cannyEdge1Spinner" amountToStepBy="10" editable="true" initialValue="20" max="250.0" min="0.0" prefWidth="70.0" />
-                              <Spinner fx:id="cannyEdge2Spinner" amountToStepBy="10" editable="true" initialValue="40" max="250.0" min="0.0" prefWidth="70.0" />
-                              <HBox prefHeight="17.0" prefWidth="238.0">
-                                 <children>
-                                    <Label text="Dilate" />
-                                    <Spinner fx:id="dilateSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="75.0" />
-                                    <Label text="Erode" />
-                                    <Spinner fx:id="erodeSpinner" amountToStepBy="1" editable="true" initialValue="3" max="50" min="0.0" prefWidth="75.0" />
-                                 </children>
-                              </HBox>
-                              <HBox prefHeight="26.0" prefWidth="238.0">
-                                 <children>
-                                    <CheckBox fx:id="morphOpenCheckbox" mnemonicParsing="false" text="Open" />
-                                    <CheckBox fx:id="morphCloseCheckbox" mnemonicParsing="false" text="Close" />
-                                    <Label text="Iterations" />
-                                    <Spinner fx:id="morphIterSpinner" amountToStepBy="1" editable="true" initialValue="1" max="50" min="0.0" prefHeight="25.0" prefWidth="73.0" />
-                                 </children>
-                              </HBox>
-                              <HBox prefHeight="17.0" prefWidth="238.0">
-                                 <children>
-                                    <Label text="Min contour area" />
-                                    <Spinner fx:id="contourMinSizeSpinner" editable="true" initialValue="15" max="150" min="0.0" prefWidth="75.0" />
-                                    <Label text="Found :" />
-                                    <Label fx:id="foundContoursLabel" text=" 0" />
-                                 </children>
-                              </HBox>
-                              <HBox prefHeight="9.0" prefWidth="238.0" />
+                              </Label>
                               <Separator prefWidth="200.0">
                                  <padding>
                                     <Insets bottom="10.0" top="10.0" />
                                  </padding>
                               </Separator>
-                              <VBox prefHeight="40.0" prefWidth="238.0">
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
                                  <children>
-                                    <Label alignment="CENTER" prefHeight="17.0" prefWidth="278.0" text="Hand segmentation settings" />
-                                    <Label text="Threshold" />
-                                    <AnchorPane fx:id="binaryThresholdPane" prefHeight="22.0" prefWidth="195.0">
-                                       <children>
-                                          <Slider fx:id="handThresholdSlider" layoutY="3.0" max="255.0" prefHeight="14.0" prefWidth="150.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="3.0" />
-                                          <Spinner fx:id="handThresholdSpinner" amountToStepBy="1" editable="true" initialValue="140" max="255" min="-127.0" prefWidth="75.0" AnchorPane.rightAnchor="7.0" />   
-                                       </children>
-                                    </AnchorPane>
+                                    <Label text="MOG threshold" />
+                                    <Spinner fx:id="mog_threshold" amountToStepBy="5" editable="true" initialValue="0" max="1000" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
                                  </children>
-                                 <padding>
-                                    <Insets bottom="7.0" left="7.0" right="7.0" />
-                                 </padding>
-                              </VBox>
-                              <HBox prefHeight="100.0" prefWidth="200.0">
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
                                  <children>
-                                    <Label text="Dilation" />
-                                    <Spinner fx:id="handDilationSpinner" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" prefHeight="25.0" prefWidth="59.0" />
-                                    <Label text="Iterations" />
-                                    <Spinner fx:id="handIterSpinner" amountToStepBy="1" editable="true" initialValue="1.0" max="255" min="-127.0" prefHeight="25.0" prefWidth="63.0" />
+                                    <Label text="MOG history" />
+                                    <Spinner fx:id="mog_history" amountToStepBy="5" editable="true" initialValue="0" max="1000" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
                                  </children>
-                              </HBox>
-                              <Separator prefWidth="200.0">
-                                 <padding>
+                              </AnchorPane>
+                              <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="17.0" prefWidth="281.0" text="Background ">
+                                 <VBox.margin>
                                     <Insets top="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <Separator layoutX="17.0" layoutY="34.0" prefWidth="200.0">
+                                 <padding>
+                                    <Insets bottom="10.0" top="10.0" />
                                  </padding>
                               </Separator>
-                              <VBox alignment="BOTTOM_LEFT" prefHeight="43.0" prefWidth="252.0">
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Bcg detect Canny param1" />
+                                    <Spinner fx:id="mog_bcgCanny1" amountToStepBy="1" editable="true" initialValue="0" max="500" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Bcg detect Canny param2" />
+                                    <Spinner fx:id="mog_bcgCanny2" amountToStepBy="1" editable="true" initialValue="0" max="500" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Bcg learning rate" />
+                                    <Spinner fx:id="mog_bcgLarningRate" amountToStepBy="0.05" editable="true" initialValue="0.0" max="1.0" min="0.0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <Label alignment="CENTER" contentDisplay="CENTER" layoutX="17.0" layoutY="121.0" prefHeight="17.0" prefWidth="281.0" text="Hand" />
+                              <Separator layoutX="17.0" layoutY="138.0" prefWidth="200.0">
                                  <padding>
-                                    <Insets bottom="7.0" left="7.0" right="7.0" top="7.0" />
+                                    <Insets bottom="10.0" top="10.0" />
                                  </padding>
-                              </VBox>
+                              </Separator>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Hand threshold" />
+                                    <Spinner fx:id="mog_handThreshold" amountToStepBy="5" editable="true" initialValue="127" max="255" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Hand mask dilate size" />
+                                    <Spinner fx:id="mog_handDilateSize" amountToStepBy="1" editable="true" initialValue="0" max="100" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Min convex depth" />
+                                    <Spinner fx:id="mog_handMinConvexDepth" amountToStepBy="1" editable="true" initialValue="0" max="200" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <Label alignment="CENTER" contentDisplay="CENTER" layoutX="17.0" layoutY="242.0" prefHeight="17.0" prefWidth="281.0" text="Goods" />
+                              <Separator layoutX="17.0" layoutY="259.0" prefWidth="200.0">
+                                 <padding>
+                                    <Insets bottom="10.0" top="10.0" />
+                                 </padding>
+                              </Separator>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Goods erode size" />
+                                    <Spinner fx:id="mog_goodsErodeSize" amountToStepBy="1" editable="true" initialValue="0" max="100" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Goods erode iterations" />
+                                    <Spinner fx:id="mog_goodsErodeIter" amountToStepBy="1" editable="true" initialValue="0" max="100" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Goods close size" />
+                                    <Spinner fx:id="mog_goodsCloseSize" amountToStepBy="1" editable="true" initialValue="0" max="100" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Goods close iterations" />
+                                    <Spinner fx:id="mog_goodsCloseIter" amountToStepBy="1" editable="true" initialValue="0" max="100" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Goods open size" />
+                                    <Spinner fx:id="mog_goodsOpenSize" amountToStepBy="1" editable="true" initialValue="0" max="100" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <AnchorPane prefHeight="27.0" prefWidth="257.0">
+                                 <children>
+                                    <Label text="Goods open iterations" />
+                                    <Spinner fx:id="mog_goodsOpenIter" amountToStepBy="1" editable="true" initialValue="0" max="100" min="0" prefWidth="75.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
                            </children>
                         </VBox>
                      </content>
@@ -473,11 +520,8 @@
    <center>
       <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
-               <children>
-                  <ImageView fx:id="previewImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" />
-               </children>
-            </HBox>
+            <ImageView fx:id="previewImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" />
+            <ImageView fx:id="backgroundImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true" />
             <ImageView fx:id="workImageView" fitHeight="150.0" fitWidth="640.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
                   <Insets top="5.0" />

@@ -22,7 +22,10 @@ import org.opencv.videoio.VideoCapture;
 import data.reciever.domain.Status;
 import utils.Config;
 
-
+/**
+*
+* @author Lukas Brchl
+*/
 public class WebcamDataReciever extends DataReciever<Mat>{
 	private VideoCapture camera;
 	private final int cameraId;
@@ -34,26 +37,28 @@ public class WebcamDataReciever extends DataReciever<Mat>{
 		this.playbackSpeed = playbackSpeed;
 	}
 
-	public void openConnection() {
+	public boolean openConnection() {
 		camera = new VideoCapture(cameraId);
-		if (!camera.isOpened()) throw new NoSuchElementException();
+		if (!camera.isOpened()) return false;
+		return true;
 	}
 	
-	//do cleanup
 	public void closeConnection() {
 		camera.release();
 	}
 
 	@Override
-	public void initDummyHost(Path path) {
+	public boolean initDummyHost(Path path) {
 		try {
 			isDummy = true;
 			filesInFolder = Files.walk(path).filter(Files::isRegularFile).collect(Collectors.toList());
 		} catch (IOException e) {
 			e.printStackTrace();
+			return false;
 		}
 		fakeStreamCounter = 0;
 		setStatus(Status.CONNECTED);
+		return true;
 	}
 
 	@Override

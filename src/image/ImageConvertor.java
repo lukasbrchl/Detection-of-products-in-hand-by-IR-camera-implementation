@@ -18,10 +18,19 @@ import org.opencv.imgproc.Imgproc;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
-import javafx.scene.image.WritablePixelFormat;
 
-
-public class ImageConvertor {
+/**
+* A static class mainly for converting OpenCV Mat to JavaFX Image class. 
+* It is possible to convert Mat to JavaFX or BufferedImage and vice-versa
+* 
+* Also contains some helper methods for reading and getting correct temperature from byte array. 
+* The byte array must be stored at 14-bit MONO Temperature Linear.
+* 
+* @author Lukas Brchl
+*/
+public final class ImageConvertor {
+	
+	private ImageConvertor() {}
 
 	public static BufferedImage convertBinaryToBufferedImage(byte[] byteArray, int imageWidth, int imageHeight) {
 		double min = bytesToCelsius(getMin(byteArray));
@@ -38,12 +47,9 @@ public class ImageConvertor {
 				for (int x = 0; x < outputImage.getWidth(); ++x) {
 					double temp  = bytesToCelsius(readTwoBytes(byteArray, counter));
 					int normalizedVal = (int) (normalizeToByte(temp, min, max));
-//					Color color = new Color(normalizedVal, normalizedVal, normalizedVal);
-//					outputImage.setRGB(x, y, color.getRGB());
 					raster.setPixel(x, y, new int[] {normalizedVal});
 					counter += 2;
-				} 
-				
+				} 				
 			}
 			return outputImage;			
 		} catch (Exception e) {			

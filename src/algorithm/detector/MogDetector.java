@@ -22,63 +22,96 @@ import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.video.Video;
 
 import algorithm.detector.domain.DetectionResult;
+import algorithm.settings.domain.MogSettings;
 import algorithm.settings.domain.SettingsWrapper;
 import image.MatOperations;
 
+/**
+* Class containing methods for successfully detecting goods on the scene using background substract alghoritm.
+* 
+* @author Lukas Brchl
+*/
 public class MogDetector extends AbstractDetector {
 
-	private static final int MOG_THRESHOLD = 20;
-	private static final int MOG_HISTORY = 50;
-
-	private BackgroundSubtractorMOG2 mog = Video.createBackgroundSubtractorMOG2(MOG_HISTORY, MOG_THRESHOLD, true);
+	private BackgroundSubtractorMOG2 bcgSubstractor;
 	
 	private Mat background;
+	private MogSettings mog;	
 
 	public MogDetector(SettingsWrapper settings) {
 		super(settings);
+		mog =  (MogSettings) settings.getByCls(MogSettings.class);	
+		Video.createBackgroundSubtractorMOG2(mog.getMogHistory(), mog.getMogThreshold(), true);
 		background = Mat.zeros(new Size(IMAGE_WIDTH, IMAGE_HEIGHT), CvType.CV_32F);
 	}
 
 	@Override
-	public void detect() {
+	public DetectionResult detect() {
+		if (isBackgroundOnly(previewMat, mog.getHandThreshold(), mog.getBcgCanny1(), mog.getBcgCanny2())) {
+			refreshBackground(previewMat);
+			return DetectionResult.BACKGROUND;
+		}
+
 		Mat substractedMogMask = new Mat();
-		mog.setVarThreshold(20);
-		mog.apply(previewMat, substractedMogMask, 0);
+		bcgSubstractor.setVarThreshold(mog.getMogThreshold());
+		bcgSubstractor.apply(previewMat, substractedMogMask, 0);
 
 		workMat = MatOperations.maskMat(workMat, substractedMogMask);
-		handMat = segmentHandBinary(workMat, 180, 9);
+		handMat = segmentHandBinary(workMat, mog.getHandThreshold(), mog.getHandMaskDilate());
 		goodsMat = getGoods(workMat, handMat);
 
 		processGoodsMat();
 		List <MatOfPoint> filteredGoodsContours = findAndfilterGoodsContours(goodsMat);		 
-		drawRectAroundGoods(filteredGoodsContours);
-		if (!isBackgroundOnly(previewMat)) 
-			goodsContourFeatures(filteredGoodsContours, printInfo);
-		refreshBackground(previewMat);
-		if (filteredGoodsContours.size() > 0 && isHandInView(previewMat)) result = DetectionResult.HAND_WITH_GOODS;
-		else if (isHandInView(previewMat)) result =  DetectionResult.EMPTY_HAND;
-		else if (isBackgroundOnly(previewMat)) result = DetectionResult.BACKGROUND;
-		else result = DetectionResult.UNDEFINED;
+//		drawRectAroundGoods(filteredGoodsContours);
+		if (printInfo) System.out.println(goodsContourFeatures(filteredGoodsContours));
+		
+		if (filteredGoodsContours.size() > 0 && isHandInView(previewMat, mog.getHandThreshold())) return DetectionResult.HAND_WITH_GOODS;
+		else if (isHandInView(previewMat, mog.getHandThreshold())) return DetectionResult.EMPTY_HAND;
+		else return DetectionResult.UNDEFINED;
 			
 	}
-
-	private void drawRectAroundGoods(List <MatOfPoint> goodsContours) {
-		for (MatOfPoint mop : goodsContours) {
-			RotatedRect rotRect = Imgproc.fitEllipse(new MatOfPoint2f(mop.toArray()));
-			Point[] points = new Point[4];
-			rotRect.points(points);
-			MatOperations.drawMinBoundingRect(goodsMat, points);		
-		}
+	
+	/**
+	* Updates stored background with input mat.
+	* 
+	* @param mat	input background mat
+	*/
+	public void refreshBackground(Mat mat) {
+		Mat convertedBg = new Mat();
+		background.convertTo(convertedBg, CvType.CV_8U);
+		Imgproc.accumulateWeighted(mat, background, mog.getBcgLearningRate());//				
+		bcgSubstractor = Video.createBackgroundSubtractorMOG2(mog.getMogHistory(), mog.getMogThreshold(), true);
+		bcgSubstractor.apply(convertedBg, new Mat());
+//			System.out.println("Updating background");	
+	}
+	
+	/**
+	* Combines input mat with input mask creating separate goods mat.
+	* 
+	* @param substracted			substracted hang with goods from background
+	* @param segmentedHandMask		hand mask
+	* @return mat containing only goods or noise
+	*/
+	public Mat getGoods(Mat substracted, Mat segmentedHandMask) {
+		Mat segmentedGoods = Mat.zeros(substracted.size(), substracted.type());
+		Mat segmentedHand = MatOperations.invert(segmentedHandMask);
+		substracted.copyTo(segmentedGoods, segmentedHand);
+		return segmentedGoods;
 	}
 
+	/**
+	* Remove noise and artifacts from goods mat.
+	*/
 	private void processGoodsMat() {
 		splitGoodsFromNoise();
-		goodsMat = MatOperations.erode(goodsMat, 4, 3);
-		goodsMat = MatOperations.morphClose(goodsMat, 25, 10);
-		goodsMat = MatOperations.morphOpen(goodsMat, 5, 5);
-
+		goodsMat = MatOperations.erode(goodsMat, mog.getGoodsErodeSize(), mog.getGoodsErodeIter());
+		goodsMat = MatOperations.morphClose(goodsMat, mog.getGoodsCloseSize(), mog.getGoodsCloseIter());
+		goodsMat = MatOperations.morphOpen(goodsMat, mog.getGoodsOpenSize(), mog.getGoodsOpenIter());
 	}
 
+	/**
+	* Draws lines around biggest convex points of hand to split hand glow from goods.
+	*/
 	private void splitGoodsFromNoise() {
 		MatOfPoint joinedHandContours = getJoinedHandContours();
 		if (!joinedHandContours.empty()) {
@@ -88,18 +121,26 @@ public class MogDetector extends AbstractDetector {
 			List<Integer> convexDefectsList = convexDefects.toList();
 			Point biggestDefect = new Point(), biggestStart = new Point(), biggestEnd = new Point();
 			
-			int biggestDepth = getBiggestDeffectInfo(convexDefectsList, aproxedHand, biggestDefect, biggestStart, biggestEnd);
+			int biggestDepth = getBiggestDeffectInfo(convexDefectsList, aproxedHand.toArray(), biggestDefect, biggestStart, biggestEnd);
 
-			if (convexDefectsList.size() > 0 && biggestDepth > 5) { // TODO
+			if (convexDefectsList.size() > 0 && biggestDepth > mog.getHandMinConvexDepth()) {
 				drawBiggestHandPoints(handMat, biggestDefect, biggestStart, biggestEnd);
 				drawHandSplitLines(goodsMat, biggestDefect, biggestStart, biggestEnd);
 			}
 		}
 	}
 
-	private int getBiggestDeffectInfo(List<Integer> convexDefectsList, MatOfPoint aproxedHand, Point biggestDefect,
-			Point biggestStart, Point biggestEnd) {
-		Point data[] = aproxedHand.toArray();
+	/**
+	* Finds biggest convex depth and corresponding points.
+	* 
+	* @param convexDefectsList	list of convex defects
+	* @param data 				array of hand aproximed hand points
+	* @param biggestDefect		output param
+	* @param biggestStart		output param
+	* @param biggestEnd		output param
+	* @return biggest convex depth
+	*/
+	private int getBiggestDeffectInfo(List<Integer> convexDefectsList, Point data[], Point biggestDefect, Point biggestStart, Point biggestEnd) {
 		int biggestDepth = -1;
 		for (int j = 0; j < convexDefectsList.size(); j = j + 4) {
 			Point start = data[convexDefectsList.get(j)];
@@ -116,6 +157,11 @@ public class MogDetector extends AbstractDetector {
 		return biggestDepth;
 	}
 
+	/**
+	* Joins hand contours into single MatOfPoint.
+	* 
+	* @return joined contours
+	*/
 	private MatOfPoint getJoinedHandContours() {
 		List<MatOfPoint> handContours = MatOperations.findContours(handMat, 0, 0);
 		Point[] contoursPoints = new Point[0];
@@ -125,21 +171,12 @@ public class MogDetector extends AbstractDetector {
 		return new MatOfPoint(contoursPoints);
 	}
 
-	public Mat getHandMask(Mat mat, Rect roiRect, int binaryThreshold, int dilateSize) {
-		Mat segmentedHandRoiMask = mat.submat(roiRect);
-		Imgproc.threshold(segmentedHandRoiMask, segmentedHandRoiMask, binaryThreshold, 255, Imgproc.THRESH_BINARY);
-		Imgproc.dilate(segmentedHandRoiMask, segmentedHandRoiMask,
-				Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(dilateSize, dilateSize)));
-		return segmentedHandRoiMask;
-	}
-
-	public Mat getGoods(Mat substracted, Mat segmentedHandMask) {
-		Mat segmentedGoods = Mat.zeros(substracted.size(), substracted.type());
-		Mat segmentedHand = MatOperations.invert(segmentedHandMask);
-		substracted.copyTo(segmentedGoods, segmentedHand);
-		return segmentedGoods;
-	}
-
+	/**
+	* Find and filter out uninteresting contours from goods mat.
+	* 
+	* @param segmentedGoods		Mat containing only goods
+	* @return found and filtered goods contours
+	*/
 	public List<MatOfPoint> findAndfilterGoodsContours(Mat segmentedGoods) {
 		List<MatOfPoint> goodsContours = MatOperations.findContours(segmentedGoods, 0, 0);
 		List<MatOfPoint> filteredContours = new ArrayList<>();
@@ -152,13 +189,29 @@ public class MogDetector extends AbstractDetector {
 		}
 		return filteredContours;
 	}
-
+	
+	/**
+	* Draws biggest convex points on the input mat.
+	* 
+	* @param handMat		Mat to draw on
+	* @param biggestDefect	convexity deffect point
+	* @param biggestStart	convexity deffect point
+	* @param biggestEnd		convexity deffect point
+	*/
 	public void drawBiggestHandPoints(Mat handMat, Point biggestDefect, Point biggestStart, Point biggestEnd) {
 		Imgproc.circle(handMat, biggestStart, 5, Scalar.all(255), 2);
 		Imgproc.circle(handMat, biggestEnd, 5, Scalar.all(255), 2);
 		Imgproc.circle(handMat, biggestDefect, 5, Scalar.all(255), 2);
 	}
 
+	/**
+	* Draws parallel split lines around hand to separate goods from hand glow
+	* 
+	* @param goodsMat		Mat to draw on
+	* @param biggestDefect	convexity deffect point
+	* @param biggestStart	convexity deffect point
+	* @param biggestEnd		convexity deffect point
+	*/
 	public void drawHandSplitLines(Mat goodsMat, Point biggestDefect, Point biggestStart, Point biggestEnd) {
 		Point p1 = new Point(), p2 = new Point(), p3 = new Point(), p4 = new Point();
 		int length = 150;
@@ -178,33 +231,30 @@ public class MogDetector extends AbstractDetector {
 		Imgproc.line(goodsMat, p1, biggestStart, Scalar.all(0), 3);
 		Imgproc.line(goodsMat, p2, biggestEnd, Scalar.all(0), 3);
 	}
-
-	public void refreshBackground(Mat mat) {
-		Mat convertedBg = new Mat();
-		background.convertTo(convertedBg, CvType.CV_8U);
-//		handMat = convertedBg;
-		if (isBackgroundOnly(mat) && !isHandInShelf(mat)) {
-			Imgproc.accumulateWeighted(mat, background, 0.5);//				
-			mog = Video.createBackgroundSubtractorMOG2(MOG_HISTORY, MOG_THRESHOLD, true);
-			mog.apply(convertedBg, new Mat());
+	
+	/**
+	* Draws min bounding rect around input contours.
+	* 
+	* @param goodsContours	contours which will be highlighted
+	*/
+	private void drawRectAroundGoods(List <MatOfPoint> goodsContours) {
+		for (MatOfPoint mop : goodsContours) {
+			RotatedRect rotRect = Imgproc.fitEllipse(new MatOfPoint2f(mop.toArray()));
+			Point[] points = new Point[4];
+			rotRect.points(points);
+			MatOperations.drawMinBoundingRect(goodsMat, points);		
 		}
 	}
 
-	public void test() {
-		// Mat first = new Mat(segmentedHandRoiMask.size(),
-		// segmentedHandRoiMask.type());
-		// Mat second = new Mat(segmentedHandRoiMask.size(),
-		// segmentedHandRoiMask.type());
-		//
-		// Imgproc.threshold(segmentedHandRoiMask, first, binaryThreshold , 255,
-		// Imgproc.THRESH_BINARY);
-		// Imgproc.adaptiveThreshold(segmentedHandRoiMask, second, 255,
-		// Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 1555,
-		// -210);
-		// Core.bitwise_or(first, second, segmentedHandRoiMask);
-		// Imgproc.dilate(segmentedHandRoiMask, segmentedHandRoiMask,
-		// Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new
-		// Size(dilateSize,dilateSize)));
+	public Mat getBackground() {
+		Mat bcg = new Mat();
+		background.convertTo(bcg, CvType.CV_8U);
+		return bcg;
 	}
 
+	public void setBackground(Mat background) {
+		this.background = background;
+	}
+
+	
 }

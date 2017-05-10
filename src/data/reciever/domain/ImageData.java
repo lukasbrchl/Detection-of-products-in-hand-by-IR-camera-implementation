@@ -1,13 +1,18 @@
 package data.reciever.domain;
 
-import java.nio.file.Path;
 
+/**
+* Converted image data from raw binary data stream. Filled in {@link FlirDataService} and also might be used in other services.
+* TODO: define own headers with metadata
+* 
+* @author Lukas Brchl
+*/
 public class ImageData {
 	
 	private final byte [] data;
 	private final String filename;
 	
-	//TODO: define own header with metadata
+	
 //	private int bytesPerPixel;
 //	private int widht;
 //	private int weight;

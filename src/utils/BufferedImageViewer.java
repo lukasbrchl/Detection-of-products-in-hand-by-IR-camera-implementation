@@ -7,6 +7,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+/**
+*
+* @author Lukas Brchl
+*/
 public class BufferedImageViewer {
 	private JFrame frame;
 	private JLabel lbl;

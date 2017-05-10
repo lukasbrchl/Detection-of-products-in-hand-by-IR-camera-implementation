@@ -24,6 +24,12 @@ import data.reciever.domain.DataPayload;
 import data.reciever.domain.Status;
 import utils.Config;
 
+/**
+* Data reciever object, customized to recieve data throught socket stream. 
+* Supports dummy host - loading files from predefined folder.
+*
+* @author Lukas Brchl
+*/
 public class FlirDataReciever extends DataReciever<DataPayload> {
 	
 //	private final int BUFFER_SIZE = 8192; // or 4096, or more\
@@ -44,17 +50,17 @@ public class FlirDataReciever extends DataReciever<DataPayload> {
 		this.playbackSpeed = playbackSpeed;
 	}
 	
-	public void openConnection() {
+	public boolean openConnection() {
 		try {
 			socket = new Socket(hostName, port);
 			inputStream =  socket.getInputStream();
-			status = Status.CONNECTED;
-			
+			status = Status.CONNECTED;			
 		} catch (Exception e) {
+			return false;
 		}	
+		return true;
 	}
 	
-	//do cleanup
 	public void closeConnection() {
 		status = Status.CLOSED;
 		if (!isDummy) {
@@ -64,7 +70,6 @@ public class FlirDataReciever extends DataReciever<DataPayload> {
 				if (inputStream != null)
 					inputStream.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -88,7 +93,7 @@ public class FlirDataReciever extends DataReciever<DataPayload> {
 		return new DataPayload(file, null);
 	}
 	
-	boolean findIfArrayIsASubset(int[] main, int[] sub) {
+	boolean findIfArrayIsASubset(int[] main, int[] sub) { //TODO: currently not using
 		int count = 0;
 		for (int i = 0; i < main.length; i++) {
 		    for (int j = 0; j < sub.length; j++) {
@@ -134,15 +139,17 @@ public class FlirDataReciever extends DataReciever<DataPayload> {
 		return true;
 	}
 
-	public void initDummyHost(Path path) {
+	public boolean initDummyHost(Path path) {
 		try {
 			isDummy = true;
 			filesInFolder = Files.walk(path).filter(Files::isRegularFile).filter(f -> f.getFileName().toString().endsWith(".bin")).collect(Collectors.toList());		
 		} catch (IOException e) {
 			e.printStackTrace();
+			return false;
 		}
 		fakeStreamCounter = 0;
 		setStatus(Status.CONNECTED);
+		return true;
 	}
 	
 }

@@ -7,6 +7,11 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+/**
+* This class contains properties that affects methods applied on preview image.
+* 
+* @author Lukas Brchl
+*/
 @XmlRootElement()
 public class PreviewSettings extends Settings {
 	

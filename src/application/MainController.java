@@ -3,10 +3,12 @@ package application;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
 import org.opencv.imgproc.Imgproc;
 
 import algorithm.detector.AbstractDetector;
@@ -16,6 +18,8 @@ import algorithm.detector.MogDetector;
 import algorithm.detector.domain.DetectionResult;
 import algorithm.detector.domain.Mode;
 import algorithm.settings.SettingsManager;
+import algorithm.settings.domain.EdgeDetectSettings;
+import algorithm.settings.domain.MogSettings;
 import algorithm.settings.domain.PreprocessingSettings;
 import algorithm.settings.domain.PreviewSettings;
 import algorithm.settings.domain.SettingsWrapper;
@@ -43,62 +47,58 @@ import javafx.stage.DirectoryChooser;
 import utils.Config;
 import utils.Utils;
 
-
+/**
+* This is the main controller of the application. The related view file is MainLayout.fxml.
+* This controller handles all UI activities and delegates them to the corresponding service classes.
+* 
+* @author Lukas Brchl
+*/
 public class MainController {
-
-	//Main container
-	@FXML private BorderPane mainBorderPane;
-	//Menu
+	
+	/** * main container */
+	@FXML private BorderPane mainBorderPane;	
+	/** * menu items */
 	@FXML private MenuItem loadFilesFromFolder, loadPreprocesSettings, storePreprocesSettings;
-	//Image containers
-	@FXML private ImageView previewImageView, workImageView, handImageView, goodsImageView, originalImageView, histogramImageView;
-	//Stream buttons
+	/** * image container */
+	@FXML private ImageView previewImageView, backgroundImageView, workImageView, handImageView, goodsImageView, originalImageView, histogramImageView;
+	/** * stream controll */
 	@FXML private Button connectToStreamButton, readStreamButton, closeStreamButton, pauseStreamButton;
 	@FXML private AnchorPane openPausePane;
-	//Overall status
+	/** * overall status  */
 	@FXML private Label streamStatusLabel, recognizedLabel;
 	
-	//Canny edge
-	@FXML private Spinner<Double> cannyEdge1Spinner, cannyEdge2Spinner;
-	//Dilate and erode
-	@FXML private Spinner<Double> dilateSpinner, erodeSpinner, morphIterSpinner;
-	@FXML private CheckBox morphOpenCheckbox, morphCloseCheckbox;
-	//Contours
-	@FXML private Spinner<Double> contourMinSizeSpinner;
-	@FXML private Label foundContoursLabel;	
-	//Binary hand threshold
-	@FXML private Slider handThresholdSlider;
-	@FXML private Spinner<Double> handThresholdSpinner, handDilationSpinner, handIterSpinner;
-	@FXML private AnchorPane binaryThresholdPane;		
-	
-	//preview tab
+	/** * preview tab */
 	@FXML private CheckBox prev_exposureCheckbox, prev_blurCheckbox, prev_cannyCheckbox, prev_saveImagesCheckbox;
 	@FXML private Slider prev_cannyThresh1Slider, prev_cannyThresh2Slider;
 	@FXML private Spinner<Double> prev_cannyThresh1Spinner, prev_cannyThresh2Spinner;
 	@FXML private Spinner<Integer> prev_playbackSpeedSpinner;
-	private DoubleProperty cannyTresh1Property, cannyTresh2Property;  //prevents Garbage collector from cleaning weak listeners
+	private DoubleProperty prev_cannyTresh1Property, prev_cannyTresh2Property;  //prevents Garbage collector from cleaning weak listeners
 	
-	//preprocessing tab
+	/** * preprocessing tab */
 	@FXML private Slider minTempSlider, maxTempSlider;	
 	@FXML private Spinner<Double> prep_tempMinSpinner, prep_tempMaxSpinner, prep_clacheSize1Spinner, prep_clacheSize2Spinner, prep_clacheClipSpinner,
 		prep_brightnessParam1Spinner, prep_brightnessParam2Spinner, prep_contrastParam1Spinner, prep_contrastParam2Spinner, prep_bilateralSize1Spinner, prep_bilateralSize2Spinner,
 		prep_gaussianSize1Spinner, prep_gaussianSize2Spinner; 	
 	@FXML private Spinner<Integer> prep_medianSizeSpinner, prep_bilateralSigmaSpinner, prep_gaussianSigmaSpinner;
 	@FXML private CheckBox prep_scaleCheckbox;
-	private DoubleProperty minTempDoubleProperty, maxTempDoubleProperty,  binaryThresholdDoubleProperty;  //prevents Garbage collector from cleaning weak listeners
+	private DoubleProperty prep_minTempDoubleProperty, prep_maxTempDoubleProperty,  prep_binaryThresholdDoubleProperty;  //prevents Garbage collector from cleaning weak listeners
 	
-	//mog tab
+	/** * alg 1 - mog tab */	
+	@FXML private Spinner<Integer> mog_threshold, mog_history, mog_bcgCanny1, mog_bcgCanny2, mog_handThreshold, mog_handDilateSize, mog_handMinConvexDepth,
+		mog_goodsErodeSize, mog_goodsErodeIter, mog_goodsCloseSize, mog_goodsCloseIter, mog_goodsOpenSize, mog_goodsOpenIter;
+	@FXML private Spinner<Double> mog_bcgLarningRate;
 	
-	//edge detect tab
+//	/** * alg 2 - edge detect tab */		
 	
-	//class variables
 	private FlirDataService fds;
 	private FlirDataReciever flirDataReciever;
 	private Path flirDummyFolder;		
 	
-	//in memory settings
+	/** * in memory settings */
 	private SettingsWrapper settings = new SettingsWrapper();
+	/** * choosen detector for evaluating */
 	private AbstractDetector detector;	
+	/** * detection mode */
 	private Mode mode;
 
 	
@@ -109,10 +109,11 @@ public class MainController {
 	protected void readStream() {			
 		if (fds == null || !fds.isRunning()) {		
 			fds = new FlirDataService(flirDataReciever);
-			fds.valueProperty().addListener((obs, oldData, newData) -> {;
+			fds.valueProperty().addListener((obs, oldData, newData) -> {
+//				if (flirDataReciever.getStatus().equals(Status.PAUSED)) return;
 				detector.setPrintInfo(true);
 				detector.initMats(newData);
-				detector.detect();
+				DetectionResult result = detector.detect();
 //
 				Utils.updateFXControl(previewImageView.imageProperty(), ImageConvertor.convertMatToImage(detector.getPreviewMat()));
 				Utils.updateFXControl(workImageView.imageProperty(), ImageConvertor.convertMatToImage(detector.getWorkMat()));
@@ -120,13 +121,16 @@ public class MainController {
 				Utils.updateFXControl(goodsImageView.imageProperty(), ImageConvertor.convertMatToImage(detector.getGoodsMat()));
 				Utils.updateFXControl(originalImageView.imageProperty(), ImageConvertor.convertMatToImage(detector.getOriginalMat()));
 				Utils.updateFXControl(histogramImageView.imageProperty(), ImageConvertor.convertMatToImage(MatOperations.createHistogram(detector.getWorkMat())));	
-				recognizedLabel.setText(detector.getResult().getResult());
+				recognizedLabel.setText(result.getResult());
 //				if (detector.getResult().equals(DetectionResult.HAND_WITH_GOODS))
 //					System.out.println("hand with goods " + newData.getFilename());
 //				else if (detector.getResult().equals(DetectionResult.EMPTY_HAND))
 //					System.out.println("empty hand " + newData.getFilename());
 //				else if (detector.getResult().equals(DetectionResult.UNDEFINED))
 //					System.out.println("undefined " + newData.getFilename());
+				Utils.updateFXControl(backgroundImageView.imageProperty(), ImageConvertor.convertMatToImage(((MogDetector) detector).getBackground()));
+//				List <MatOfPoint> filteredGoodsContours = ((MogDetector) detector).findAndfilterGoodsContours(detector.getGoodsMat());		 
+//				detector.goodsContourFeatures(filteredGoodsContours, true);
 			});
 			
 			fds.messageProperty().addListener((obs, oldValue, newValue) -> { 
@@ -209,7 +213,8 @@ public class MainController {
 			if (mode.equals(Mode.MOG_DETECTION)) detector = new MogDetector(settings);
 			else if (mode.equals(Mode.EDGE_DETECTION)) detector = new EdgeDetector(settings);
 			else if (mode.equals(Mode.BACKGROUND_DETECTION)) detector = new BackgroundDetector(settings, "D:\\ThesisProjectImages\\4_13_03_termo7_cat\\background\\");
-			readStream();		
+		
+		readStream();		
 	}		
 	
 	@FXML
@@ -225,8 +230,6 @@ public class MainController {
 		flirDataReciever.setStatus(Status.PAUSED);
 		toggleOpenPause();
 	}
-
-
 		
 	@FXML
 	protected void saveImagesCheckboxClicked(ActionEvent event) {
@@ -245,13 +248,15 @@ public class MainController {
 	}
 	
 	private void bindSpinnersToSliders() {	 
-		 minTempDoubleProperty = DoubleProperty.doubleProperty(prep_tempMinSpinner.getValueFactory().valueProperty());
-		 maxTempDoubleProperty = DoubleProperty.doubleProperty(prep_tempMaxSpinner.getValueFactory().valueProperty());
-		 binaryThresholdDoubleProperty = DoubleProperty.doubleProperty(handThresholdSpinner.getValueFactory().valueProperty());
+		 prep_minTempDoubleProperty = DoubleProperty.doubleProperty(prep_tempMinSpinner.getValueFactory().valueProperty());
+		 prep_maxTempDoubleProperty = DoubleProperty.doubleProperty(prep_tempMaxSpinner.getValueFactory().valueProperty());
+		 prev_cannyTresh1Property =  DoubleProperty.doubleProperty(prev_cannyThresh1Spinner.getValueFactory().valueProperty());
+		 prev_cannyTresh2Property =  DoubleProperty.doubleProperty(prev_cannyThresh2Spinner.getValueFactory().valueProperty());
 	
-	     minTempSlider.valueProperty().bindBidirectional(minTempDoubleProperty);
-	     maxTempSlider.valueProperty().bindBidirectional(maxTempDoubleProperty);
-	     handThresholdSlider.valueProperty().bindBidirectional(binaryThresholdDoubleProperty);	    
+	     minTempSlider.valueProperty().bindBidirectional(prep_minTempDoubleProperty);
+	     maxTempSlider.valueProperty().bindBidirectional(prep_maxTempDoubleProperty);
+	     prev_cannyThresh1Slider.valueProperty().bindBidirectional(prev_cannyTresh1Property);
+	     prev_cannyThresh2Slider.valueProperty().bindBidirectional(prev_cannyTresh2Property);
 	}
 	
 	private void bindPreviewSettings() {	
@@ -291,15 +296,32 @@ public class MainController {
 	}	
 	
 	private void bindMogSettings() {	
-	
+		MogSettings mog = (MogSettings) settings.getByCls(MogSettings.class);		
+		mog_threshold.getValueFactory().valueProperty().bindBidirectional(mog.mogThresholdProperty());
+		mog_history.getValueFactory().valueProperty().bindBidirectional(mog.mogHistoryProperty());
+			
+		mog_bcgCanny1.getValueFactory().valueProperty().bindBidirectional(mog.bcgCanny1Property());
+		mog_bcgCanny2.getValueFactory().valueProperty().bindBidirectional(mog.bcgCanny2Property());
+		mog_bcgLarningRate.getValueFactory().valueProperty().bindBidirectional(mog.bcgLearningRateProperty());
+		
+		mog_handThreshold.getValueFactory().valueProperty().bindBidirectional(mog.handThresholdProperty());			
+		mog_handDilateSize.getValueFactory().valueProperty().bindBidirectional(mog.handMaskDilateProperty());
+		mog_handMinConvexDepth.getValueFactory().valueProperty().bindBidirectional(mog.handMinConvexDepthProperty());
+		
+		mog_goodsErodeSize.getValueFactory().valueProperty().bindBidirectional(mog.goodsErodeSizeProperty());
+		mog_goodsErodeIter.getValueFactory().valueProperty().bindBidirectional(mog.goodsErodeIterProperty());		 
+		mog_goodsCloseSize.getValueFactory().valueProperty().bindBidirectional(mog.goodsCloseSizeProperty());
+		mog_goodsCloseIter.getValueFactory().valueProperty().bindBidirectional(mog.goodsCloseIterProperty());
+		mog_goodsOpenSize.getValueFactory().valueProperty().bindBidirectional(mog.goodsOpenSizeProperty());
+		mog_goodsOpenIter.getValueFactory().valueProperty().bindBidirectional(mog.goodsOpenIterProperty());	
 	}
 	
 	private void bindEdgeDetectSettings() {	
-		
+		EdgeDetectSettings eds = (EdgeDetectSettings) settings.getByCls(EdgeDetectSettings.class);	
 	}
 	
 	
-	//init
+	//initialize focus properties
 	 private void focusInit() {
 	     pauseStreamButton.visibleProperty().addListener((observable, oldValue, newValue) -> {
 	    	    if (newValue.equals(false)) readStreamButton.requestFocus();

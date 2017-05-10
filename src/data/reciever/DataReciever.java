@@ -8,9 +8,12 @@ import org.opencv.videoio.VideoCapture;
 
 import data.reciever.domain.Status;
 
+/**
+* An abstract generic class for stream data reciever.
+* 
+* @author Lukas Brchl
+*/
 public abstract class DataReciever<T> {
-	public static final int DEFAULT_PLAYBACK_SPEED = 33;
-	
 	protected Status status;
 	protected boolean saveImages;
 	protected boolean isDummy;
@@ -19,10 +22,30 @@ public abstract class DataReciever<T> {
 	protected int fakeStreamCounter;
 	protected T latest;
 	
-	protected abstract void openConnection();	
-	protected abstract void initDummyHost(Path path);
+	/**
+	 *  Connects to specified hostname and port.
+	 *  
+	 * @return the success of the operation
+	 */
+	protected abstract boolean openConnection();
+	
+	/**
+	 *  Initializes dummy stream.
+	 *  
+	 * @return the success of the operation
+	 */
+	protected abstract boolean initDummyHost(Path path);
+	
+	/**
+	 *  Do cleanup, close all resources.
+	 */
 	protected abstract void closeConnection(); //do cleanup
 	
+	/**
+	 *  Decides on returning latest or actual recieved image from stream. Depending on saveImage flag might store recieved images.
+	 *  
+	 * @return the image of type T
+	 */	
 	public T getImage() throws ClosedByInterruptException, InterruptedException {
 		if (status.equals(Status.PAUSED)) return latest;
 		if (isDummy) 
@@ -34,8 +57,25 @@ public abstract class DataReciever<T> {
 		return latest;
 	}
 	
+	/**
+	 *  Gets image from initialized dummy stream.
+	 *  
+	 * @return the image of type T
+	 */	
 	protected abstract T getImageFromDummyStream() throws InterruptedException, ClosedByInterruptException;
+	
+	/**
+	 *  Gets image from connected real stream.
+	 *  
+	 * @return the image of type T
+	 */
 	protected abstract T getImageFromStream();
+	
+	/**
+	 *  Saves recieved images to harddrive.
+	 *  
+	 * @return the success of the operation
+	 */
 	protected abstract boolean saveImage();
 
 	public Status getStatus() {

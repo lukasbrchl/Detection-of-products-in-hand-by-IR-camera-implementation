@@ -5,6 +5,7 @@
 bin
 img    
 lib
+doc
 conf/config.properties
 *.tiff
 *.bin

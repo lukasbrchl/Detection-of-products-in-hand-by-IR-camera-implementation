@@ -18,6 +18,11 @@ import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import utils.Utils;
 
+/**
+* Task for getting raw binary data from FlirDataReciever stream and converting them to ImageData object including metadata.
+*
+* @author Lukas Brchl
+*/
 public class FlirDataService extends Service<ImageData> {
 	
 	private final FlirDataReciever dataReciever;

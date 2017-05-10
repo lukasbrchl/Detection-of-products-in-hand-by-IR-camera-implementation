@@ -1,11 +1,14 @@
 package utils;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+/**
+* Singleton object class for working with stored config file.
+* @author Lukas Brchl
+*/
 public class Config {
 	
    private static Config instance = null;
@@ -16,7 +19,6 @@ public class Config {
    public static final String WEBCAM_DUMMY_PATH= "image.dummy.path.webcam";
    public static final String FLIR_IMAGE_SAVE = "image.save.path.flir";
    public static final String WEBCAM_IMAGE_SAVE = "image.save.path.webcam";
-   public static final String DUMMY_SLEEP = "image.dummy.playback.sleep";
    
    private static final String CONFIG_PATH = "conf/config.properties";
    private Properties properties;
