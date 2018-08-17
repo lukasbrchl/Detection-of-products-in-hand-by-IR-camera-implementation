@@ -158,7 +158,6 @@ public class MainController {
 	@FXML 
 	 public void loadFilesFromFolderClicked(ActionEvent event) throws IOException {
 		DirectoryChooser directoryChooser = new DirectoryChooser();
-		directoryChooser.setInitialDirectory(new File("D:\\ThesisProjectImages\\"));
 		File file = directoryChooser.showDialog(mainBorderPane.getScene().getWindow());
 		if (file != null) {
 			flirDummyFolder = file.toPath();
@@ -208,11 +207,10 @@ public class MainController {
 		flirDataReciever.setStatus(Status.STREAMING);
 		toggleOpenPause();	
 		mode = Mode.MOG_DETECTION;
-//		mode = Mode.BACKGROUND_DETECTION;
 		if (detector == null)
 			if (mode.equals(Mode.MOG_DETECTION)) detector = new MogDetector(settings);
 			else if (mode.equals(Mode.EDGE_DETECTION)) detector = new EdgeDetector(settings);
-			else if (mode.equals(Mode.BACKGROUND_DETECTION)) detector = new BackgroundDetector(settings, "D:\\ThesisProjectImages\\4_13_03_termo7_cat\\background\\");
+//			else if (mode.equals(Mode.BACKGROUND_DETECTION)) detector = new BackgroundDetector(settings, "%FILL_PATH%");
 		
 		readStream();		
 	}		

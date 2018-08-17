@@ -82,7 +82,6 @@ public class MogDetector extends AbstractDetector {
 		Imgproc.accumulateWeighted(mat, background, mog.getBcgLearningRate());//				
 		bcgSubstractor = Video.createBackgroundSubtractorMOG2(mog.getMogHistory(), mog.getMogThreshold(), true);
 		bcgSubstractor.apply(convertedBg, new Mat());
-//			System.out.println("Updating background");	
 	}
 	
 	/**
@@ -183,8 +182,6 @@ public class MogDetector extends AbstractDetector {
 
 		for (MatOfPoint mop : goodsContours) {
 			if (mop.toArray().length < 5) continue; // < 5 is nonsese and will end in error
-//			RotatedRect rotRect = Imgproc.fitEllipse(new MatOfPoint2f(mop.toArray()));
-//			if (rotRect.size.width < 20 || rotRect.size.height < 20) continue; //TODO		
 			filteredContours.add(mop);
 		}
 		return filteredContours;
