@@ -1,4 +1,4 @@
-# Detection-of-products-in-hand-by-IR-camera
+# Detection of products in customer's hand by IR camera 
 This repository contains Java sources of the main application with detection and proccesing algorithms 
 related to my bachelor thesis (https://github.com/lukasbrchl/Bachelor-thesis-text-sources). 
 
